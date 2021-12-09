@@ -31,8 +31,8 @@ def __save_log(mark=None):
     :return: logging.FileHandler()
     """
     #file_name = hashlib.md5(bytes(randint(1000, 9999))).hexdigest()
-    file_name = time.strftime('%Y-%m-%d@%H:%M:%S',time.localtime())
-    file_log = logging.FileHandler(filename=WORK_PATH + '/logs/' + file_name + '.log')
+    file_name = time.strftime('%Y-%m-%d_%H-%M-%S',time.localtime())
+    file_log = logging.FileHandler(filename=os.path.join(WORK_PATH,'logs',file_name + '.log'))
     #file_log.setFormatter(__format_switch(debug_status=coon.get('logging', 'debug')))
     file_log.setFormatter(__format_switch('true'))
     file_log.setLevel(log_status)
@@ -56,24 +56,24 @@ consloe_log.setFormatter(__format_switch(debug_status='true'))
 #logger.addHandler(consloe_log)
 
 
-if not os.path.exists(WORK_PATH + '/logs'):
+if not os.path.exists(os.path.join(WORK_PATH,'logs')):
     try:
-        os.mkdir(WORK_PATH + '/logs')
+        os.mkdir(os.path.join(WORK_PATH,'logs'))
     except OSError:
         logger.warning('创建日志文件失败，请尝试手动在当前目录下创建 logs 目录（文件夹）')
 
 # 配置文件初始化
 coon = ConfigParser()
-if not os.path.exists(WORK_PATH + '/setting.ini'):
+if not os.path.exists(os.path.join(WORK_PATH,'setting.ini')):
     logger.warning('找不到配置文件！请务必将自带的setting.ini放置于软件同一目录下')
     raise FileNotFoundError('未能找到配置文件，请务必将自带的setting.ini放置于软件同一目录下')
-coon.read(WORK_PATH + '/setting.ini', encoding='utf-8')
+coon.read(os.path.join(WORK_PATH,'setting.ini'), encoding='utf-8')
 
 
 # 配置文件更新函数
 def conf_update(section, key, value):
     coon.set(section, key, value)
-    coon.write(open(WORK_PATH + '/setting.ini','w', encoding='utf-8'))
+    coon.write(open(os.path.join(WORK_PATH,'setting.ini'),'w', encoding='utf-8'))
 
 logger.addHandler(__save_log())
 # 设置LOGGING
