@@ -2,14 +2,9 @@ import requests
 from requests import utils
 import time
 import hashlib
-import logging
-from configparser import ConfigParser
-import os
 from random import randint
-from rich.progress import Progress,track
 from . import coon
 from . import logger
-
 
 requests.packages.urllib3.disable_warnings()
 # 初始化requests
@@ -50,7 +45,7 @@ apis = {
     'self_comment': 'https://zjyapp.icve.com.cn/newMobileAPI/FaceTeach/getFaceTeachSelfEvaluation',
     'cell_info': 'https://zjyapp.icve.com.cn/newMobileAPI/AssistTeacher/getCellInfoByCellId',
     'cell_info_new': 'https://zjy2.icve.com.cn/api/common/Directory/viewDirectory',
-    'finish_cell':'https://zjy2.icve.com.cn/api/common/Directory/stuProcessCellLog',
+    'finish_cell': 'https://zjy2.icve.com.cn/api/common/Directory/stuProcessCellLog',
 }
 
 
@@ -62,17 +57,6 @@ def login_check(func):
             return {'code': '0', 'msg': '未登陆！'}
 
     return wrapper
-
-def cookie_check(requests):
-    def check(func):
-        def wrapper(*args, **kwargs):
-            try:
-                return func(*args, **kwargs)
-            except KeyError:
-                return {'code': '0', 'msg': '未登陆！'}
-        return wrapper
-    return check
-
 
 
 class User:
@@ -126,6 +110,7 @@ class User:
         登陆（APP），登陆后让session获取到相关信息并返回用户的相关信息
         :return: 登陆信息
         """
+
         def get_device(emit):
             def md5it(content=None):
                 if content:
@@ -292,8 +277,6 @@ class User:
         return self.__s
 
 
-
-
 class Course:
     def __init__(self, user):
         self.user = user
@@ -308,7 +291,25 @@ class Course:
             'stuId': self.user.id,
             'newToken': self.user.token
         }
+        self.progress = None    # RICH 进程
+        self.progress_task = None
 
+    # 用于设置RICH进程
+    def set_progress(self,progress):
+        self.progress = progress
+
+    # 用于添加RICH进程任务
+    def set_progress_task(self,task):
+        self.progress_task = task
+    '''
+    # 用于添加RICH进程任务
+    def add_progress_task(self,centent,**kwargs):
+        return self.progress.add_task(centent,kwargs)
+
+    # 用于更新RICH进程任务
+    def update_progress(self,task,**kwargs):
+        return self.progress.update(task,kwargs)
+    '''
     def get_req(self, api, params):
         res = self.__s.get(url=apis[api], params=params)
         return res
@@ -418,7 +419,7 @@ class Course:
         t_list = self.courseware(api=apis['all_topic'], params=pay_load)
         return [{'name': t['topicName'], 'id': t['topicId']} for t in t_list]
 
-    def get_cell(self, course_id, topic_id,class_id=None) -> list:
+    def get_cell(self, course_id, topic_id, class_id=None) -> list:
         """
         获取指定章节下的课件列表
         :param course_id: 课程ID
@@ -429,7 +430,7 @@ class Course:
         pay_laod.update({
             'courseOpenId': course_id,
             'topicId': topic_id,
-            'openClassId':class_id
+            'openClassId': class_id
         })
 
         c_list = self.courseware(api=apis['all_cell'], params=pay_laod)
@@ -459,7 +460,7 @@ class Course:
         else:
             logger.warning(f'无法获取到课件{cell_id}的信息')
 
-    def change_corseware(self,course_id,class_id,cell_id,cell_name):
+    def change_corseware(self, course_id, class_id, cell_id, cell_name):
         # 重置INFO_GET
         headers = the_headers.copy()
         headers.update({
@@ -470,13 +471,14 @@ class Course:
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9'
         })
         form_load = {
-            'courseOpenId':course_id,
-            'openClassId':class_id,
-            'cellId':cell_id,
-            'cellName':cell_name
+            'courseOpenId': course_id,
+            'openClassId': class_id,
+            'cellId': cell_id,
+            'cellName': cell_name
         }
 
-        res = self.__s.post(url='https://zjy2.icve.com.cn/api/common/Directory/changeStuStudyProcessCellData', data=form_load, headers=headers)
+        res = self.__s.post(url='https://zjy2.icve.com.cn/api/common/Directory/changeStuStudyProcessCellData',
+                            data=form_load, headers=headers)
         res_json = res.json()
         if res_json['code'] == 1:
             return True
@@ -485,7 +487,7 @@ class Course:
 
     def cell_info(self, course_id, class_id, cell_id):
         def cookie_check():
-            #cookie = self.__s.cookies
+            # cookie = self.__s.cookies
             cookie = utils.dict_from_cookiejar(self.__s.cookies)
             if not cookie.get('auth'):
                 cookie.update(self.user.cookies)
@@ -496,7 +498,7 @@ class Course:
             'courseOpenId': course_id,
             'openClassId': class_id,
             'cellId': cell_id,
-            'flag':'s'
+            'flag': 's'
         }
         while True:
             res = self.__s.post(apis['cell_info_new'], data=form_load)
@@ -522,13 +524,14 @@ class Course:
                 logger.warning(f'获取课件 {cell_id} 的信息失败')
                 return None
 
-
     def finish_cell(self, course_id, class_id, cell_id):
         time.sleep(1)
         cell_info = self.cell_info(course_id, class_id, cell_id)
 
+
+
         if int(cell_info['process']) == 100:
-            logger.info(f'课件 {cell_id} 已达到100%完成度，将不会进行添加时长或页数操作')
+            logger.info(f'课件 {cell_info["name"]}({cell_info["id"]}) 已达到100%完成度，将不会进行添加时长或页数操作')
         else:
             headers = {
                 'Host': 'zjyapp.icve.com.cn',
@@ -551,17 +554,21 @@ class Course:
                 'token': self.user.token,
                 'dtype': '1',
             }
+
+            task_cell = self.progress_task
             if '视' in cell_info['type']:
                 # 视频类型
+                #task_cell = self.progress.add_task(f'[red]{cell_info["name"]}', total=int(cell_info['long']))
+                self.progress.update(task_cell,completed=0,description=f'[yellow]{cell_info["name"]}(视频)',refresh=True)
                 def get_next_long(num, long):
                     if num == long:
                         # 防止卡循环
-                        return long+1
+                        return long + 1
                     else:
-                        new_num = num+18.213321
+                        new_num = num + 18.213321
                         if (new_num) < long:
-                            if new_num-num > 20:
-                                return new_num-1
+                            if new_num - num > 20:
+                                return new_num - 1
                             else:
                                 return new_num
                         else:
@@ -576,36 +583,38 @@ class Course:
 
                     self.__s.cookies.clear()
 
-
                     form_load['studyNewlyTime'] = num
-                    # res = requests.post(url='https://zjy2.icve.com.cn/api/common/Directory/stuProcessCellLog', data=form_load,headers=headers)
+                    res = self.__s.post(url=apis['finish_cell'], data=form_load, headers=headers)
 
-                    res = self.__s.post(url=apis['finish_cell'],data=form_load,headers=headers)
-                    #res = requests.post(url=apis['finish_cell'],headers=headers,data=form_load)
                     res_json = res.json()
                     if res_json['code'] == 1:
-                        logger.info(f'成功为课件{cell_id}添加时长至 {num} ，总时长 {long} (注意此时长非真正意义上视频时长)')
+                        logger.info(f'成功为课件 {cell_info["name"]}({cell_id}) 添加时长至 {num} ，总时长 {long} (注意此时长非真正意义上视频时长)')
+
+                        self.progress.update(task_cell,completed=num/long,description=f'[yellow]{cell_info["name"]}(视频)',refresh=True)
 
                         # 随机等待时长
                         wait = randint(5, 10)
                         logger.info(f'随机等待{wait}秒')
                         time.sleep(wait)
 
-                        num = get_next_long(num,long)
+                        num = get_next_long(num, long)
                         continue
                     elif res_json['code'] == -2:
                         num = num - 0.00123
                         time.sleep(2)
                         continue
                     else:
-                        logger.warning(f'为课件{cell_id}添加时长失败：{res_json["msg"]}')
+                        logger.warning(f'为课件 {cell_info["name"]}({cell_id}) 添加时长失败：{res_json["msg"]}')
                         break
-                logger.info(f'已为课件{cell_id}添加时长至{num}秒，目标时长{long}秒')
+                self.progress.update(task_cell,completed=1,description=f'[green]{cell_info["name"]}(完成课件)',refresh=True)
+                logger.info(f'已为课件 {cell_info["name"]}({cell_id}) 添加时长至{num}秒，目标时长{long}秒')
             else:
                 # 文档类型
+                #task_cell = self.progress.add_task(f'[red]{cell_info["name"]}', total=int(cell_info['page']))
+                self.progress.update(task_cell,completed=0,description=f'[yellow]{cell_info["name"]}({cell_info["type"]})',refresh=True)
                 def get_next_page(now, page):
                     if now == page:
-                        return page+1
+                        return page + 1
                     else:
                         if (now + 5) <= page:
                             return now + 5
@@ -626,33 +635,36 @@ class Course:
                         'studyNewlyPicNum': str(now_page),
                     })
 
-                    res = self.__s.post(url=apis['finish_cell'],data=form_load,headers=headers)
-                    #res = requests.post(url=apis['finish_cell'],headers=headers,data=form_load)
+                    res = self.__s.post(url=apis['finish_cell'], data=form_load, headers=headers)
+                    # res = requests.post(url=apis['finish_cell'],headers=headers,data=form_load)
                     res_json = res.json()
                     if res_json['code'] == 1:
-                        logger.info(f'成功为课件 {cell_id} 添加页数至 {now_page} ，总页数 {page_long}')
+                        logger.info(f'成功为课件 {cell_info["name"]}({cell_id}) 添加页数至 {now_page} ，总页数 {page_long}')
+                        self.progress.update(task_cell,completed=now_page/page_long,description=f'[yellow]{cell_info["name"]}({cell_info["type"]})',refresh=True)
 
                         # 随机等待时长
                         wait = randint(5, 10)
                         logger.info(f'随机等待{wait}秒')
                         time.sleep(wait)
 
-                        now_page = get_next_page(now_page,page_long)
+                        now_page = get_next_page(now_page, page_long)
                         continue
                     else:
-                        logger.warning(f'为课件 {cell_id} 添加页数失败：{res_json["msg"]}')
+                        logger.warning(f'为课件 {cell_info["name"]}({cell_id}) 添加页数失败：{res_json["msg"]}')
                         break
-                logger.info(f'已为课件 {cell_id} 添加页数至 {now_page} ，目标页数 {page_long}')
+                self.progress.update(task_cell, completed=1,description=f'[green]{cell_info["name"]}(完成课件)', refresh=True)
+
+                logger.info(f'已为课件 {cell_info["name"]}({cell_id}) 添加页数至 {now_page} ，目标页数 {page_long}')
 
 
-    def all_cell(self, course_id=None, course_name=None,class_id=None) -> list:
+    def all_cell(self, course_id=None, course_name=None, class_id=None) -> list:
         """
         自动获取某一课程下所有课件列表，两个参数至少要有一项
         :param course_id: （可选）课程ID，当两参数都有时以此为准
         :param course_name: （可选）课程名，会自动根据此来匹配课程名，可能会导致误差
         :return: list 包含课件名称和ID的列表
         """
-        #class_id = ''
+        # class_id = ''
         if not course_id and course_name:
             # 仅当无ID且有Name时尝试定位，二者都有时以ID为准
             course_list = self.all_course
@@ -676,7 +688,7 @@ class Course:
             t_list += self.get_topic(m['id'], course_id)
         for t in t_list:
             logger.info('获取目录 {} 对应的课件中...'.format(t['name']))
-            c_list += self.get_cell(course_id, t['id'],class_id)
+            c_list += self.get_cell(course_id, t['id'], class_id)
 
         for c in c_list:
             logger.info('获取到课件：{0}({1})[{2}]--{3}'.format(c['name'], c['type'], c['id'], c['process']))
@@ -923,4 +935,3 @@ class Sign:
             logger.info('已将 {} 的签到状态改为[已签到]'.format(lesson_id))
         else:
             logger.warning('更改 {0} 的签到状态失败:{1}'.format(lesson_id, res_json['msg']))
-

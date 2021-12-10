@@ -1,8 +1,6 @@
 import time
 from configparser import ConfigParser
 import logging
-import hashlib
-from random import randint
 import os
 
 # 获取当前工作目录
@@ -24,7 +22,7 @@ def __format_switch(debug_status=None):
     else:
         logger.warning('你的设置文件LOGGING选项有错误，请务必为 true 或 flas，当前已默认视为选中 true')
 
-def __save_log(mark=None):
+def __save_log():
     """
     保存日志
     :param mark: 标记，默认为None时将为随机数
@@ -76,20 +74,3 @@ def conf_update(section, key, value):
     coon.write(open(os.path.join(WORK_PATH,'setting.ini'),'w', encoding='utf-8'))
 
 logger.addHandler(__save_log())
-# 设置LOGGING
-
-
-
-# 刷新和添加Handler
-'''
-consloe_log.setFormatter(__format_switch(debug_status=coon.get('logging', 'debug')))
-consloe_log.setLevel(log_status)
-
-logger.addHandler(consloe_log)
-if coon.get('logging', 'file_save') == 'true':
-    logger.addHandler(__save_log())
-
-# DEBUG 提醒
-if log_status == logging.DEBUG:
-    logger.info('注意：已启动DEBUG模式，如需关闭请在同目录下 setting.ini 文件中将 logging中debug 选项更改为 false')
-'''

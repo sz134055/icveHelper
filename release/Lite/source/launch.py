@@ -1,11 +1,12 @@
 from rich.console import Console
 from rich.table import Table
-from lite import logger
 from lite import coon, conf_update
 from lite import core
 import requests
 import time
-from rich.progress import Progress, track, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
+
+version = '0.2.0-Alpha'
 
 console = Console()
 
@@ -46,6 +47,14 @@ __the_logo = '''
     |______/ \______/     \_/    |________/
     '''
 
+
+def login_status_check(func):
+    def warp(*args,**kwargs):
+        try:
+            return func(*args,**kwargs)
+        except BaseException:
+            return None
+    return warp
 
 def all_my_course(user):
     console.print('正在拉取你的所有课程')
@@ -114,9 +123,9 @@ def all_cell(user, course_id,class_id=None):
 
 # 主循环
 while True:
-    console.print(f'[right]{__the_logo}[/right]\nWELCOME!\n本程序仅学习之余制作，用于帮助学习\n如用于盈利后果自负\n', style='bold red')
+    console.print(f'[right]{__the_logo}[/right]\nWELCOME ICVE！\n本程序仅学习之余制作，用于帮助学习\n如用于盈利后果自负\n', style='bold red')
     # 登陆
-    console.print('未登陆！', style='red')
+    console.print('版本：'+version, style='red')
     login_info['userName'] = console.input('请输入你的职教云账号\n')
     login_info['userPwd'] = console.input('\n请输入你的职教云密码\n[red]注意：密码不会显示出来[/red]\n', password=True)
 
@@ -194,7 +203,7 @@ while True:
 
     try:
         me = core.User(login_info)
-    except requests.exceptions.ConnectionError:
+    except requests.exceptions.HTTPError:
         console.print('\n[red]无网络链接或无法链接至职教云服务器，请检查网络或稍后再试[/red]')
         console.input('[red]->[/red]输入任意字符或回车继续')
         continue
@@ -229,7 +238,7 @@ while True:
                     console.print('未能选中任何课程，请重新选择', style='red')
                     continue
 
-            console.print(f'当前已选中课程[red] {course_choose} ({course_choose_info["courseOpenId"]})[/red]\n')
+            console.print(f'\n当前已选中课程[red] {course_choose} ({course_choose_info["courseOpenId"]})[/red]\n')
 
             command = console.input('[red]->[/red]请输入对应操作的序号，输入其它非序号来重新选择课程：\n1-自动完成并评论课程下所有课件\n2-显示某一课程的课件完成信息\n3-自动完成对当前课程的所有开课评论\n')
 
@@ -238,10 +247,6 @@ while True:
                 content = console.input('批量评论内容：')
 
                 cell_list = all_cell(me, course_choose_info['courseOpenId'],course_choose_info['openClassId'])
-                my_course = core.Course(me)
-
-                # 重置当前课件为第一课件
-                my_course.change_corseware(course_id=course_choose_info['courseOpenId'],class_id=course_choose_info['openClassId'],cell_id=cell_list[0]['id'],cell_name=cell_list[0]['name'])
 
                 with Progress(
                         SpinnerColumn(),
@@ -250,33 +255,53 @@ while True:
                         TimeElapsedColumn(),
                         TextColumn("[progress.percentage]{task.percentage:>3.0f}%")
                     ) as progress:
+                    my_course = core.Course(me)
+                    # 设置rich progress
+                    my_course.set_progress(progress=progress)
+
+                    # 重置当前课件为第一课件
+                    my_course.change_corseware(course_id=course_choose_info['courseOpenId'],
+                                               class_id=course_choose_info['openClassId'], cell_id=cell_list[0]['id'],
+                                               cell_name=cell_list[0]['name'])
+
                     # 总进度
                     task_total = progress.add_task('[yellow]总进度',total=len(cell_list))
-                    task_cell = progress.add_task('当前课程',total=10)
-
+                    task_cell = progress.add_task('当前课程',total=1)
+                    my_course.set_progress_task(task_cell)
+                    task_comment = progress.add_task('[red]当前课程评论',total=3)
                     for cell in cell_list:
                         # 单课进度
                         #task_cell = progress.add_task(f'[red]{cell["name"]}',total=10)
 
-                        progress.update(task_cell,completed=0,description=f'[yellow]{cell["name"]}[视频]',refresh=True)
+                        #progress.update(task_cell,completed=0,description=f'[yellow]{cell["name"]}[视频]',refresh=True)
                         if cell['process'] != 100:
                             my_course.finish_cell(course_id=course_choose_info['courseOpenId'],class_id=course_choose_info['openClassId'],cell_id=cell['id'])
                             time.sleep(2)
-                        progress.update(task_cell,completed=8,description=f'[rgb(0,128,128)]{cell["name"]}[对比评论]',refresh=True)
+                        else:
+                            progress.update(task_cell,completed=1,description=f'[green]{cell["name"]}(跳过课件)',refresh=True)
+                        #progress.update(task_cell,completed=8,description=f'[rgb(0,128,128)]{cell["name"]}[对比评论]',refresh=True)
+                        progress.update(task_comment,completed=0,description=f'[rgb(0,128,128)]{cell["name"]}[获取评论]',refresh=True)
                         comment_info = my_course.all_comment(cell['id'], course_choose_info['courseOpenId'], course_choose_info['openClassId'], 1)
+                        progress.update(task_comment, completed=1, description=f'[rgb(0,128,128)]{cell["name"]}[对比评论]',refresh=True)
                         is_comment = False
                         for comment in comment_info:
                             if me.id == comment['user_id']:
                                 #console.print('已经评论过此课件，跳过')
                                 is_comment = True
-                                progress.update(task_cell,completed=9,description=f'[rgb(0,128,128)]{cell["name"]}[跳过评论]',refresh=True)
+                                #progress.update(task_cell,completed=9,description=f'[rgb(0,128,128)]{cell["name"]}[跳过评论]',refresh=True)
+                                progress.update(task_comment, completed=2,description=f'[rgb(0,128,128)]{cell["name"]}[跳过评论]', refresh=True)
+
                                 break
 
                         if not is_comment:
                             my_course.add_comment(cell['id'], course_choose_info['courseOpenId'], course_choose_info['openClassId'], content,star)
-                            progress.update(task_cell,completed=9,description=f'[rgb(0,128,128)]{cell["name"]}[添加评论]',refresh=True)
+                            progress.update(task_comment, completed=2,description=f'[rgb(0,128,128)]{cell["name"]}[添加评论]', refresh=True)
+
+                        progress.update(task_comment, completed=3,description=f'[rgb(0,128,128)]{cell["name"]}[完成评论]', refresh=True)
+
+                            #progress.update(task_cell,completed=9,description=f'[rgb(0,128,128)]{cell["name"]}[添加评论]',refresh=True)
                             #console.print(f'已为课件 {cell["id"]} 添加评论：{content} ({star}星)')
-                        progress.update(task_cell,completed=10,description=f'[green]{cell["name"]}[完成]',refresh=True)
+                        #progress.update(task_cell,completed=10,description=f'[green]{cell["name"]}[完成]',refresh=True)
                         progress.update(task_total,advance=1,refresh=True)
                         time.sleep(2)
 
