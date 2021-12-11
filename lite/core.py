@@ -607,7 +607,7 @@ class Course:
                             continue
                         elif res_json['code'] == -2:
                             num = num - 0.00123
-                            time.sleep(2)
+                            time.sleep(random.randint(2,4))
                             continue
                         else:
                             logger.warning(f'为课件 {cell_info["name"]}({cell_id}) 添加时长失败：{res_json["msg"]}')

@@ -1,3 +1,5 @@
+import random
+
 from rich.console import Console
 from rich.table import Table
 from lite import coon, conf_update
@@ -276,7 +278,7 @@ while True:
                         #progress.update(task_cell,completed=0,description=f'[yellow]{cell["name"]}[视频]',refresh=True)
                         if cell['process'] != 100:
                             my_course.finish_cell(course_id=course_choose_info['courseOpenId'],class_id=course_choose_info['openClassId'],cell_id=cell['id'])
-                            time.sleep(2)
+                            time.sleep(random.randint(2,4))
                         else:
                             progress.update(task_cell,completed=1,description=f'[green]{cell["name"]}(跳过课件)',refresh=True)
                         #progress.update(task_cell,completed=8,description=f'[rgb(0,128,128)]{cell["name"]}[对比评论]',refresh=True)
@@ -299,11 +301,8 @@ while True:
 
                         progress.update(task_comment, completed=3,description=f'[rgb(0,128,128)]{cell["name"]}[完成评论]', refresh=True)
 
-                            #progress.update(task_cell,completed=9,description=f'[rgb(0,128,128)]{cell["name"]}[添加评论]',refresh=True)
-                            #console.print(f'已为课件 {cell["id"]} 添加评论：{content} ({star}星)')
-                        #progress.update(task_cell,completed=10,description=f'[green]{cell["name"]}[完成]',refresh=True)
                         progress.update(task_total,advance=1,refresh=True)
-                        time.sleep(2)
+                        time.sleep(random.randint(3,5))
 
             elif command == '2':
                 cell_list = all_cell(me, course_choose_info['courseOpenId'],course_choose_info['openClassId'])
