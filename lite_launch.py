@@ -6,7 +6,7 @@ import requests
 import time
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
 
-version = '0.2.0-Alpha'
+version = '0.2.1-Alpha'
 
 console = Console()
 
