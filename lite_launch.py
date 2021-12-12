@@ -1,15 +1,31 @@
 from rich.console import Console
 from rich.table import Table
-from lite import coon, conf_update
+from lite import coon, conf_update,logger
 from lite import core
+#from lite.update import version_check,set_console
 import requests
 import time
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
 
-version = '0.2.1-Alpha'
+
+version = coon.get('version','version')
+build = coon.get('version','build')
 
 console = Console()
+#set_console(console)
 
+def check_update(now_version,now_build):
+    res = requests.get(url='https://hyasea.top:7002/icve/version',verify=False)
+    if res.status_code == 200:
+        res_json = res.json()
+        if float(now_build) < float(res_json['build']):
+            logger.info(f'发现新版本：{res_json["version"]}')
+            console.print(
+                f'[yellow]->[/yellow]新版本：[red]{res_json["version"]}[/red]\n[green]->[/green]更新说明：\n[green]{res_json["content"]}[/green]')
+
+            console.input('\n[yellow]建议更新[/yellow]')
+# 检查更新
+check_update(version,build)
 
 def uuid_get(remake=False):
     uuid = coon.get('user', 'clientId')

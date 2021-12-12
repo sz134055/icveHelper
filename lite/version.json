@@ -1,0 +1,10 @@
+{
+  "version": "0.2.3-Alpha",
+  "build": "20211212.1",
+  "fix": [
+    ["lite","version.json"],
+    ["lite","core.py"],
+    ["launch.py"]
+  ],
+  "content": "增加更新检测"
+}

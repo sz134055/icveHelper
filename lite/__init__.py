@@ -2,10 +2,10 @@ import time
 from configparser import ConfigParser
 import logging
 import os
+import json
 
 # 获取当前工作目录
 WORK_PATH = os.path.split(os.path.realpath(__file__))[0]
-
 
 # 初始化LOGGING
 def __format_switch(debug_status=None):

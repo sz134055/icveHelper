@@ -1,3 +1,5 @@
+import random
+
 import requests
 from requests import utils
 import time
@@ -520,6 +522,9 @@ class Course:
                     'now_long': res_json['stuStudyNewlyTime'],  # 当前学习视频时长（秒）
                     'process': res_json['cellPercent']  # 当前学习进度 %
                 }
+            elif res_json['code'] == -1:
+                logger.warning(f'获取课件{cell_id}的信息失败：{res_json["msg"]}')
+                return None
             else:
                 logger.warning(f'获取课件 {cell_id} 的信息失败')
                 return None
@@ -528,134 +533,136 @@ class Course:
         time.sleep(1)
         cell_info = self.cell_info(course_id, class_id, cell_id)
 
-
-
-        if int(cell_info['process']) == 100:
-            logger.info(f'课件 {cell_info["name"]}({cell_info["id"]}) 已达到100%完成度，将不会进行添加时长或页数操作')
-        else:
-            headers = {
-                'Host': 'zjyapp.icve.com.cn',
-                'Accept': '*/*',
-                'Accept-Language': 'zh-Hans-CN;q=1.0',
-                'Accept-Encoding': 'gzip;q=1.0, compress;q=0.5',
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36 Edg/93.0.961.52',
-                'Cookie': 'auth=' + self.user.cookies['auth']
-            }
-
-            form_load = {
-                'courseOpenId': course_id,
-                'openClassId': class_id,
-                'cellId': cell_id,  # 2
-                'cellLogId': '',
-                'picNum': '0',
-                'studyNewlyTime': '',
-                'studyNewlyPicNum': '0',
-                # 'token':'sbjmapgth4topzqft1tikq',
-                'token': self.user.token,
-                'dtype': '1',
-            }
-
-            task_cell = self.progress_task
-            if '视' in cell_info['type']:
-                # 视频类型
-                #task_cell = self.progress.add_task(f'[red]{cell_info["name"]}', total=int(cell_info['long']))
-                self.progress.update(task_cell,completed=0,description=f'[yellow]{cell_info["name"]}(视频)',refresh=True)
-                def get_next_long(num, long):
-                    if num == long:
-                        # 防止卡循环
-                        return long + 1
-                    else:
-                        new_num = num + 18.213321
-                        if (new_num) < long:
-                            if new_num - num > 20:
-                                return new_num - 1
-                            else:
-                                return new_num
-                        else:
-                            return long
-
-                # 视频课件
-                num = cell_info['now_long']
-                long = cell_info['long']
-
-                num = get_next_long(num, long)
-                while num <= long:
-
-                    self.__s.cookies.clear()
-
-                    form_load['studyNewlyTime'] = num
-                    res = self.__s.post(url=apis['finish_cell'], data=form_load, headers=headers)
-
-                    res_json = res.json()
-                    if res_json['code'] == 1:
-                        logger.info(f'成功为课件 {cell_info["name"]}({cell_id}) 添加时长至 {num} ，总时长 {long} (注意此时长非真正意义上视频时长)')
-
-                        self.progress.update(task_cell,completed=num/long,description=f'[yellow]{cell_info["name"]}(视频)',refresh=True)
-
-                        # 随机等待时长
-                        wait = randint(5, 10)
-                        logger.info(f'随机等待{wait}秒')
-                        time.sleep(wait)
-
-                        num = get_next_long(num, long)
-                        continue
-                    elif res_json['code'] == -2:
-                        num = num - 0.00123
-                        time.sleep(2)
-                        continue
-                    else:
-                        logger.warning(f'为课件 {cell_info["name"]}({cell_id}) 添加时长失败：{res_json["msg"]}')
-                        break
-                self.progress.update(task_cell,completed=1,description=f'[green]{cell_info["name"]}(完成课件)',refresh=True)
-                logger.info(f'已为课件 {cell_info["name"]}({cell_id}) 添加时长至{num}秒，目标时长{long}秒')
+        # 解决异常学习导致无法获取课件信息问题
+        task_cell = self.progress_task
+        if cell_info:
+            if int(cell_info['process']) == 100:
+                logger.info(f'课件 {cell_info["name"]}({cell_info["id"]}) 已达到100%完成度，将不会进行添加时长或页数操作')
             else:
-                # 文档类型
-                #task_cell = self.progress.add_task(f'[red]{cell_info["name"]}', total=int(cell_info['page']))
-                self.progress.update(task_cell,completed=0,description=f'[yellow]{cell_info["name"]}({cell_info["type"]})',refresh=True)
-                def get_next_page(now, page):
-                    if now == page:
-                        return page + 1
-                    else:
-                        if (now + 5) <= page:
-                            return now + 5
+                headers = {
+                    'Host': 'zjyapp.icve.com.cn',
+                    'Accept': '*/*',
+                    'Accept-Language': 'zh-Hans-CN;q=1.0',
+                    'Accept-Encoding': 'gzip;q=1.0, compress;q=0.5',
+                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36 Edg/93.0.961.52',
+                    'Cookie': 'auth=' + self.user.cookies['auth']
+                }
+
+                form_load = {
+                    'courseOpenId': course_id,
+                    'openClassId': class_id,
+                    'cellId': cell_id,  # 2
+                    'cellLogId': '',
+                    'picNum': '0',
+                    'studyNewlyTime': '',
+                    'studyNewlyPicNum': '0',
+                    # 'token':'sbjmapgth4topzqft1tikq',
+                    'token': self.user.token,
+                    'dtype': '1',
+                }
+
+
+                if '频' in cell_info['type']:
+                    # 视频、音频类型
+                    #task_cell = self.progress.add_task(f'[red]{cell_info["name"]}', total=int(cell_info['long']))
+                    self.progress.update(task_cell,completed=0,description=f'[yellow]{cell_info["name"]}({cell_info["type"]})',refresh=True)
+                    def get_next_long(num, long):
+                        if num == long:
+                            # 防止卡循环
+                            return long + 1
                         else:
-                            return page
+                            new_num = num + random.uniform(18,19.5)
+                            if (new_num) < long:
+                                if new_num - num > 20:
+                                    return new_num - 1
+                                else:
+                                    return new_num
+                            else:
+                                return long
 
-                now_page = cell_info['now_page']
-                page_long = cell_info['page']
-                if now_page == 0:
-                    # 针对图片类型
-                    now_page += 1
+                    # 视频课件
+                    num = cell_info['now_long']
+                    long = cell_info['long']
 
-                now_page = get_next_page(now_page, page_long)
-                while now_page <= page_long:
+                    num = get_next_long(num, long)
+                    while num <= long:
 
-                    form_load.update({
-                        'picNum': str(now_page),
-                        'studyNewlyPicNum': str(now_page),
-                    })
+                        self.__s.cookies.clear()
 
-                    res = self.__s.post(url=apis['finish_cell'], data=form_load, headers=headers)
-                    # res = requests.post(url=apis['finish_cell'],headers=headers,data=form_load)
-                    res_json = res.json()
-                    if res_json['code'] == 1:
-                        logger.info(f'成功为课件 {cell_info["name"]}({cell_id}) 添加页数至 {now_page} ，总页数 {page_long}')
-                        self.progress.update(task_cell,completed=now_page/page_long,description=f'[yellow]{cell_info["name"]}({cell_info["type"]})',refresh=True)
+                        form_load['studyNewlyTime'] = num
+                        res = self.__s.post(url=apis['finish_cell'], data=form_load, headers=headers)
 
-                        # 随机等待时长
-                        wait = randint(5, 10)
-                        logger.info(f'随机等待{wait}秒')
-                        time.sleep(wait)
+                        res_json = res.json()
+                        if res_json['code'] == 1:
+                            logger.info(f'成功为课件 {cell_info["name"]}({cell_id}) 添加时长至 {num} ，总时长 {long} (注意此时长非真正意义上视频时长)')
 
-                        now_page = get_next_page(now_page, page_long)
-                        continue
-                    else:
-                        logger.warning(f'为课件 {cell_info["name"]}({cell_id}) 添加页数失败：{res_json["msg"]}')
-                        break
-                self.progress.update(task_cell, completed=1,description=f'[green]{cell_info["name"]}(完成课件)', refresh=True)
+                            self.progress.update(task_cell,completed=num/long,description=f'[yellow]{cell_info["name"]}({cell_info["type"]})',refresh=True)
 
-                logger.info(f'已为课件 {cell_info["name"]}({cell_id}) 添加页数至 {now_page} ，目标页数 {page_long}')
+                            # 随机等待时长
+                            wait = randint(5, 10)
+                            logger.info(f'随机等待{wait}秒')
+                            time.sleep(wait)
 
+                            num = get_next_long(num, long)
+                            continue
+                        elif res_json['code'] == -2:
+                            num = num - 0.00123
+                            time.sleep(random.randint(2,4))
+                            continue
+                        else:
+                            logger.warning(f'为课件 {cell_info["name"]}({cell_id}) 添加时长失败：{res_json["msg"]}')
+                            break
+                    self.progress.update(task_cell,completed=1,description=f'[green]{cell_info["name"]}(完成课件)',refresh=True)
+                    logger.info(f'已为课件 {cell_info["name"]}({cell_id}) 添加时长至{num}秒，目标时长{long}秒')
+                else:
+                    # 文档类型
+                    #task_cell = self.progress.add_task(f'[red]{cell_info["name"]}', total=int(cell_info['page']))
+                    self.progress.update(task_cell,completed=0,description=f'[yellow]{cell_info["name"]}({cell_info["type"]})',refresh=True)
+                    def get_next_page(now, page):
+                        if now == page:
+                            return page + 1
+                        else:
+                            if (now + 5) <= page:
+                                return now + 5
+                            else:
+                                return page
+
+                    now_page = cell_info['now_page']
+                    page_long = cell_info['page']
+                    if now_page == 0:
+                        # 针对图片类型
+                        now_page += 1
+
+                    now_page = get_next_page(now_page, page_long)
+                    while now_page <= page_long:
+
+                        form_load.update({
+                            'picNum': str(now_page),
+                            'studyNewlyPicNum': str(now_page),
+                        })
+
+                        res = self.__s.post(url=apis['finish_cell'], data=form_load, headers=headers)
+                        # res = requests.post(url=apis['finish_cell'],headers=headers,data=form_load)
+                        res_json = res.json()
+                        if res_json['code'] == 1:
+                            logger.info(f'成功为课件 {cell_info["name"]}({cell_id}) 添加页数至 {now_page} ，总页数 {page_long}')
+                            self.progress.update(task_cell,completed=now_page/page_long,description=f'[yellow]{cell_info["name"]}({cell_info["type"]})',refresh=True)
+
+                            # 随机等待时长
+                            wait = randint(5, 10)
+                            logger.info(f'随机等待{wait}秒')
+                            time.sleep(wait)
+
+                            now_page = get_next_page(now_page, page_long)
+                            continue
+                        else:
+                            logger.warning(f'为课件 {cell_info["name"]}({cell_id}) 添加页数失败：{res_json["msg"]}')
+                            break
+                    self.progress.update(task_cell, completed=1,description=f'[green]{cell_info["name"]}(完成课件)', refresh=True)
+
+                    logger.info(f'已为课件 {cell_info["name"]}({cell_id}) 添加页数至 {now_page} ，目标页数 {page_long}')
+        else:
+            self.progress.update(task_cell, completed=0, description=f'[red]{cell_info["name"]}(失败，建议重新登陆再试)', refresh=True)
 
     def all_cell(self, course_id=None, course_name=None, class_id=None) -> list:
         """

@@ -1,17 +1,31 @@
-import random
-
 from rich.console import Console
 from rich.table import Table
-from lite import coon, conf_update
+from lite import coon, conf_update,logger
 from lite import core
+#from lite.update import version_check,set_console
 import requests
 import time
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
 
-version = '0.2.0-Alpha'
+
+version = coon.get('version','version')
+build = coon.get('version','build')
 
 console = Console()
+#set_console(console)
 
+def check_update(now_version,now_build):
+    res = requests.get(url='https://hyasea.top:7002/icve/version',verify=False)
+    if res.status_code == 200:
+        res_json = res.json()
+        if float(now_build) < float(res_json['build']):
+            logger.info(f'发现新版本：{res_json["version"]}')
+            console.print(
+                f'[yellow]->[/yellow]新版本：[red]{res_json["version"]}[/red]\n[green]->[/green]更新说明：\n[green]{res_json["content"]}[/green]')
+
+            console.input('\n[yellow]建议更新[/yellow]')
+# 检查更新
+check_update(version,build)
 
 def uuid_get(remake=False):
     uuid = coon.get('user', 'clientId')
@@ -278,7 +292,7 @@ while True:
                         #progress.update(task_cell,completed=0,description=f'[yellow]{cell["name"]}[视频]',refresh=True)
                         if cell['process'] != 100:
                             my_course.finish_cell(course_id=course_choose_info['courseOpenId'],class_id=course_choose_info['openClassId'],cell_id=cell['id'])
-                            time.sleep(random.randint(2,4))
+                            time.sleep(2)
                         else:
                             progress.update(task_cell,completed=1,description=f'[green]{cell["name"]}(跳过课件)',refresh=True)
                         #progress.update(task_cell,completed=8,description=f'[rgb(0,128,128)]{cell["name"]}[对比评论]',refresh=True)
@@ -301,8 +315,11 @@ while True:
 
                         progress.update(task_comment, completed=3,description=f'[rgb(0,128,128)]{cell["name"]}[完成评论]', refresh=True)
 
+                            #progress.update(task_cell,completed=9,description=f'[rgb(0,128,128)]{cell["name"]}[添加评论]',refresh=True)
+                            #console.print(f'已为课件 {cell["id"]} 添加评论：{content} ({star}星)')
+                        #progress.update(task_cell,completed=10,description=f'[green]{cell["name"]}[完成]',refresh=True)
                         progress.update(task_total,advance=1,refresh=True)
-                        time.sleep(random.randint(3,5))
+                        time.sleep(2)
 
             elif command == '2':
                 cell_list = all_cell(me, course_choose_info['courseOpenId'],course_choose_info['openClassId'])
