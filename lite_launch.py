@@ -23,7 +23,7 @@ def check_update(now_version,now_build):
             console.print(
                 f'[yellow]->[/yellow]新版本：[red]{res_json["version"]}[/red]\n[green]->[/green]更新说明：\n[green]{res_json["content"]}[/green]')
 
-            console.input('\n[yellow]建议更新[/yellow]')
+            console.input('\n[yellow]建议更新[/yellow]输入任意内容或回车继续')
 # 检查更新
 check_update(version,build)
 
