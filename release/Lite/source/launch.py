@@ -24,7 +24,7 @@ def check_update(now_version, now_build):
             console.print(
                 f'[yellow]->[/yellow]新版本：[red]{res_json["version"]}[/red]\n[green]->[/green]更新说明：\n[green]{res_json["content"]}[/green]')
 
-            console.input('\n[yellow]建议更新[/yellow]输入任意内容或回车继续')
+            console.input('\n[yellow]建议更新[/yellow]\n输入任意内容或回车继续')
 
 def broadcast():
     res = requests.get(url='https://hyasea.top:7002/icve/broadcast')
@@ -158,7 +158,9 @@ while True:
     console.print(f'[right]{__the_logo}[/right]\nWELCOME ICVE！\n本程序仅学习之余制作，用于帮助学习\n如用于盈利后果自负\n', style='bold red')
     # 登陆
     console.print('版本：' + version, style='red')
+    console.print('-' * 20)
     broadcast()
+    console.print('-'*20)
     login_info['userName'] = console.input('请输入你的职教云账号\n')
     login_info['userPwd'] = console.input('\n请输入你的职教云密码\n[red]注意：密码不会显示出来[/red]\n', password=True)
 
@@ -251,7 +253,7 @@ while True:
         course_list = all_my_course(user=me)
 
         course_choose = ''
-
+        course_choose_id = None
         course_choose_list = []
         while True:
             def make_course_choose(choose:str):
@@ -265,37 +267,41 @@ while True:
                 else:
                     course_num_list = choose.split(' ')
                     for c in course_num_list:
-                        course_choose_list.append(course_list[int(c)-1]['coureseOpenId'])
+                        course_choose_list.append(course_list[int(c)-1]['courseOpenId'])
 
 
 
-            if not course_choose:
+            if not course_choose_id:
                 course_choose = console.input(
                     '\n[red]->[/red]选择一门课程（其名称或完整的ID）以继续：\n[yellow]->[/yellow]名称可以不填写完全，例如课程 大学生创新创业，可写大学生创新\n[green]->[/green]但对于名称略有重复的课程如 大学语文与大学英语 请至少填写为 大学语或大学英\n'
                     '现在你可以使用[red]d+序号[/red]选课甚至多选（序号见上表,序号选择必须保证第一个是d），用空格分割，如：[red]d1 2 3[/red]，或者使用斜杠(/)分割来选择一个范围，如：[red]d1/3[/red]，表示选中序号[red]1，2，3[/red]这三门课程\n')
                 if 'd' == course_choose[0]:
                     # 序号选择
-                    course_choose = course_choose.replace('d','')
-                    make_course_choose(course_choose)
-                    course_choose = 'wait'      # 占位
+                    course_choose_num = course_choose.replace('d','')
+                    make_course_choose(course_choose_num)
+                    course_choose_id = 'wait'      # 占位
                     continue
             elif course_choose_list:
-                if course_choose == 'wait':
-                    course_choose = course_choose_list[0]
+                if course_choose_id == 'wait':
+                    course_choose_id = course_choose_list[0]
                 else:
-                    course_choose_list.remove(course_choose)
-                    course_choose = course_choose_list[0]
+                    course_choose_list.remove(course_choose_id)
+                    try:
+                        course_choose_id = course_choose_list[0]
+                    except IndexError:
+                        course_choose_id = None
+                        console.print('已完成所有选择的课程')
             else:
                 if console.input(f'\n[red]->[/red]当前默认选择上次课程[yellow] {course_choose}[/yellow]，回车继续，任意字符重新选择'):
-                    course_choose = ''
+                    course_choose_id = ''
                     continue
 
             course_choose_info = {}
-            if not course_choose:
+            if not course_choose_id:
                 continue
             else:
                 for c in course_list:
-                    if course_choose in c['courseName'] or course_choose == c['courseOpenId']:
+                    if course_choose in c['courseName'] or course_choose == c['courseOpenId'] or course_choose_id == c['courseOpenId']:
                         course_choose = c['courseName']
                         course_choose_info = c.copy()
                         break
@@ -304,7 +310,7 @@ while True:
                     console.print('未能选中任何课程，请重新选择', style='red')
                     continue
 
-            console.print(f'\n当前已选中课程[red] {course_choose} ({course_choose_info["courseOpenId"]})[/red]\n')
+            console.print(f'\n当前已选中课程[red] {course_choose} ({course_choose_id})[/red]\n')
 
             command = console.input(
                 '[red]->[/red]请输入对应操作的序号，输入其它非序号来重新选择课程：\n1-自动完成并评论课程下所有课件\n2-显示当前课程的课件完成信息\n3-自动完成对当前课程的所有开课评论\n')
@@ -339,9 +345,13 @@ while True:
                     my_course.set_progress(progress=progress)
 
                     # 重置当前课件为第一课件
-                    my_course.change_corseware(course_id=course_choose_info['courseOpenId'],
-                                               class_id=course_choose_info['openClassId'], cell_id=cell_list[0]['id'],
-                                               cell_name=cell_list[0]['name'])
+                    try:
+                        my_course.change_corseware(course_id=course_choose_info['courseOpenId'],
+                                                   class_id=course_choose_info['openClassId'], cell_id=cell_list[0]['id'],
+                                                   cell_name=cell_list[0]['name'])
+                    except IndexError:
+                        console.print('[yellow]->[/yellow]课程下无课件，跳过')
+                        continue
 
                     # 总进度
                     task_total = progress.add_task('[yellow]总进度', total=len(cell_list))
