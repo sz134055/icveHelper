@@ -7,6 +7,9 @@ import json
 # 获取当前工作目录
 WORK_PATH = os.path.split(os.path.realpath(__file__))[0]
 
+# 初始化错误日志名
+LOG_FILE_NAME = ''
+
 # 初始化LOGGING
 def __format_switch(debug_status=None):
     global log_status
@@ -28,9 +31,11 @@ def __save_log():
     :param mark: 标记，默认为None时将为随机数
     :return: logging.FileHandler()
     """
+    global LOG_FILE_NAME
     #file_name = hashlib.md5(bytes(randint(1000, 9999))).hexdigest()
     file_name = time.strftime('%Y-%m-%d_%H-%M-%S',time.localtime())
-    file_log = logging.FileHandler(filename=os.path.join(WORK_PATH,'logs',file_name + '.log'))
+    LOG_FILE_NAME = os.path.join(WORK_PATH,'logs',file_name + '.log')
+    file_log = logging.FileHandler(filename=LOG_FILE_NAME)
     #file_log.setFormatter(__format_switch(debug_status=coon.get('logging', 'debug')))
     file_log.setFormatter(__format_switch('true'))
     file_log.setLevel(log_status)

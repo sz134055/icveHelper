@@ -1,5 +1,4 @@
 import random
-
 import requests
 from requests import utils
 import time
@@ -278,7 +277,6 @@ class User:
         self.user_info['cookies']
 
         return self.__s
-
 
 class Course:
     def __init__(self, user):

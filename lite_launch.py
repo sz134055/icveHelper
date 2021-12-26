@@ -1,7 +1,9 @@
+from traceback import format_exc as traceback_exc
 from rich.console import Console
 from rich.table import Table
 from lite import coon, conf_update, logger
 from lite import core
+from lite import LOG_FILE_NAME
 # from lite.update import version_check,set_console
 import requests
 import time
@@ -410,5 +412,6 @@ try:
                 else:
                     console.print('重新选择课程')
                     continue
-except BaseException as e:
-    logger.error(e)
+except:
+    logger.error('\n'+traceback_exc())
+    console.print(f'[red]发生异常错误，日志已保存：[/red]\n[yellow]{LOG_FILE_NAME}[/yellow]')
