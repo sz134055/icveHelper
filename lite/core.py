@@ -7,6 +7,7 @@ import hashlib
 from random import randint
 from . import coon
 from . import logger
+from sys import _getframe
 
 requests.packages.urllib3.disable_warnings()
 # 初始化requests
@@ -746,21 +747,24 @@ class Course:
         while int(pay_load['page']) <= limit:
             logger.info('正在获取第 {} 页的评论'.format(pay_load['page']))
             res = self.__s.get(url=apis['all_comment'], params=pay_load)
-            res_json = res.json()
+            if res.status_code == 200:
+                res_json = res.json()
 
-            if res_json['code'] == 1:
-                c_list = res_json['list']
-                comment_list += [
-                    {'user_id': c['userId'], 'user_name': c['displayName'], 'content': c['content'], 'star': c['star']}
-                    for c in c_list]
-                if len(c_list) < 20:
-                    pay_load['page'] = str(int(pay_load['page']) + 1)
-                    continue
+                if res_json['code'] == 1:
+                    c_list = res_json['list']
+                    comment_list += [
+                        {'user_id': c['userId'], 'user_name': c['displayName'], 'content': c['content'], 'star': c['star']}
+                        for c in c_list]
+                    if len(c_list) < 20:
+                        pay_load['page'] = str(int(pay_load['page']) + 1)
+                        continue
+                    else:
+                        break
                 else:
+                    logger.warning('获取 {} 的评论失败'.format(cell_id))
                     break
             else:
-                logger.warning('获取 {} 的评论失败'.format(cell_id))
-                break
+                logger.info(f'函数：{_getframe().f_code.co_name}\n异常的返回：CODE {res.status_code}  CONTENT ：\n{res.text}')
         return comment_list
 
     def add_comment(self, cell_id, course_id, class_id, content, star):
