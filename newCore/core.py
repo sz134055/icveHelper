@@ -1,3 +1,4 @@
+import uuid
 from functools import wraps
 import requests
 from requests import utils
@@ -139,6 +140,8 @@ class BaseReq:
                 raise ReqError('在处理表单和参数时发生错误')
 
         if REQ_METHOD:
+            # 这里待加入针对登陆过期判断，特征-> [200] : {"code":-1000,...}
+
             return self.__s.request(
                 method=REQ_METHOD
                 , url=url
@@ -156,6 +159,8 @@ class BaseReq:
 class User(BaseReq):
     # 默认为未登陆状态
     isLogin = False
+    # 上次登陆时间
+    last_login = 0
 
     def __init__(self):
         super().__init__()
@@ -183,6 +188,18 @@ class User(BaseReq):
         # 登陆状态
         # self.isLogin = False
 
+        self.apis.update({
+            'login':'https://zjyapp.icve.com.cn/newMobileAPI/MobileLogin/newSignIn',
+            'newTokne':'https://zjyapp.icve.com.cn/newMobileAPI/MobileLogin/getNewSignInToke',
+            'msg':'https://zjyapp.icve.com.cn/newMobileAPI/News/getUserNewsList',
+            'msgRead':'https://zjyapp.icve.com.cn/newMobileAPI/News/setNewsIsReadById',
+            'msgAllRead':'https://zjyapp.icve.com.cn/newMobileAPI/News/setAllNewsIsRead',
+            'msgDelete':'https://zjyapp.icve.com.cn/newMobileAPI/News/deletedNewsByIds',
+            'pswdEidt':'',
+            'Logout':'',
+            'saveLogin':''
+        })
+
     def set_account(self, account: str, pswd: str):
         """
         设置登陆的账号密码
@@ -195,17 +212,26 @@ class User(BaseReq):
             'userPwd': pswd
         })
 
-    def set_device(self, name: str, version: str):
+    def set_device(self, name: str, version: str, clientID: str):
         """
         设置设备名和系统版本号
         :param name: 设备名
         :param version: 系统版本号
+        :param clientID: clientId
         :return: None
         """
         self.__login_info.update({
             'equipmentModel': name,
             'equipmentApiVersion': version
         })
+        if not clientID:
+            self.__login_info.update({
+                'clientId': str(uuid.uuid4()).replace('-', '')
+            })
+        else:
+            self.__login_info.update({
+                'clientId':clientID
+            })
 
     def set_app(self, version: str, os_type: str):
         """
@@ -292,6 +318,18 @@ class User(BaseReq):
                 })
                 # 更新登陆状态
                 self.isLogin = True
+                # 更新登陆时间
+                self.last_login = time.time()
+
+                # 更新默认表单
+                self.__params.update({
+                    'sourceType': '3',
+                    'userId': self.my_info['id'],
+                    #'userName': self.__login_info['userName'],
+                    #'userPwd': self.__login_info['userPwd'],
+                    #'clientId': self.__login_info['clientId']
+                })
+
                 self.new_info('1', f'用户{self.my_info["name"]}({self.my_info["id"]})已登陆')
             else:
                 # 登陆失败
@@ -309,11 +347,36 @@ class User(BaseReq):
         @wraps(func)
         def wrapper(*args, **kwargs):
             if cls.isLogin:
-                return func(*args, **kwargs)
+                if time.time() - cls.last_login < 10800:
+                    return func(*args, **kwargs)
+                else:
+                    # 更换TOKEN
+                    cls.token_update()
+                    return func(*args, **kwargs)
             else:
                 raise LoginFail('请先登陆！')
 
         return wrapper
+
+    @login_check
+    def token_update(self):
+        try:
+            res = self.get(api='newToken', params={
+                'userName': self.__login_info['userName'],
+                'userPwd': self.__login_info['userPwd'],
+                'clientId': self.__login_info['clientId']
+            })
+            res_json = res.json()
+            if res_json['code'] == 1:
+                # 刷新TOKEN
+                self.my_info.update({
+                    'token':res_json['newToken']
+                })
+            else:
+                raise LoginFail(f'更换TOKEN失败：{res_json["msg"]}')
+        except ReqError as e:
+            raise LoginFail(f'更换TOKEN失败：{e}')
+
 
     @property
     @login_check
@@ -488,7 +551,7 @@ class Course(BaseReq):
                 courses.remove(sample_c)
             raise CourseError(f'未查找到包含关键字 {wd} 的课程')
 
-    def __search_now(self,wd,key=None):
+    def __search_now(self, wd, key=None):
         """
         内部用于对比当前课程是否与预查询课程相同
         :param wd: 关键字
@@ -510,16 +573,14 @@ class Course(BaseReq):
         else:
             return False
 
-
-
     def now_course_id(self):
         pass
 
     def get_courses(self):
         self.courses = self.__courses()
 
-    def __courseware_get(self,api,params):
-        res = self.get(api=api,params=params)
+    def __courseware_get(self, api, params):
+        res = self.get(api=api, params=params)
         res_json = res.json()
         if res_json['code'] == 1:
             # 预处理
@@ -529,19 +590,18 @@ class Course(BaseReq):
         else:
             raise ReqError(f'获取失败：{res_json["code"]}---{res_json["msg"]}')
 
-
-    def modules(self,course_id=None,wd=None):
+    def modules(self, course_id=None, wd=None):
         course_info = {}
         if not course_id and not wd:
             raise CourseError('未指定课程')
         elif course_id:
-            if self.__search_now(wd=course_id,key='courseOpenId'):
+            if self.__search_now(wd=course_id, key='courseOpenId'):
                 course_info = self.now_course
             else:
                 try:
-                    course_info = self.search(course_id,key='courseOpenId')
+                    course_info = self.search(course_id, key='courseOpenId')
                 except CourseError as e:
-                    self.new_info('0',f'查找课程所有章节时失败：{e}')
+                    self.new_info('0', f'查找课程所有章节时失败：{e}')
                     return []
         else:
             if self.__search_now(wd=wd):
@@ -550,21 +610,19 @@ class Course(BaseReq):
                 try:
                     course_info = self.search(wd)
                 except CourseError as e:
-                    self.new_info('0',f'查找课程所有章节时失败：{e}')
+                    self.new_info('0', f'查找课程所有章节时失败：{e}')
                     return []
         try:
-            m_list = self.__courseware_get(api='modules',params={
+            m_list = self.__courseware_get(api='modules', params={
                 'courseOpenId': course_info['courseOpenId'],
                 'openClassId': course_info['openClassId']
             })
             # 预处理
             return [{'name': m['moduleName'], 'id': m['moduleId']} for m in m_list]
         except ReqError as e:
-            self.new_info('0',f'获取课程章节失败：{e}')
+            self.new_info('0', f'获取课程章节失败：{e}')
         finally:
             return []
-
-
 
     def courseware(self):
         pass
