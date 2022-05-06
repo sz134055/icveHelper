@@ -63,5 +63,14 @@ while True:
         my_course = Course(me)
         currentInfo = '正在获取所有课程'
         all_my_course = my_course.all_course
+        if isinstance(all_my_course,list):
+            currentInfo = '所有课程获取完毕，准备开始任务...'
+        else:
+            currentInfo = '获取课程失败'
+            delet_one()
+            continue
+
+
+
     else:
         currentInfo = '闲置中...'
