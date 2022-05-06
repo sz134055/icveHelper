@@ -1,7 +1,12 @@
-from flask import Blueprint, request, jsonify,session
+from flask import Blueprint, request, jsonify, session
 from web.core import User
 
 api_bp = Blueprint('api', __name__)
+
+
+class CourseStatus:
+    def __init__(self):
+        self.info = {}
 
 
 @api_bp.route('/login')
@@ -27,6 +32,25 @@ def login():
     return login_status
 
 
-@api_bp.route('/session')
+@api_bp.route('/logins')
 def sess():
+    try:
+        session['cookies']
+    except KeyError:
+        return jsonify({'code': '0', 'msg': 'SESSION不完整'})
+    user = User(session[:])
+    login_status = user.login_from_session()
+    if login_status['code'] == 1:
+        session.update(user.user_info)
+
+    return jsonify(login_status)
+
+
+@api_bp.route('/course/nowStatus')
+def courseStatus():
+    pass
+
+
+@api_bp.route('/course/allComplete')
+def courseComplete():
     pass

@@ -250,7 +250,10 @@ class User:
             # 失败
             return {'code': '0', 'msg': res_json['msg']}
 
-    def login_from_session(self,info:dict):
+    def login_from_session(self,info:dict=None):
+        if not info:
+            info = self.login_info
+
         # 用于将User更新为已经登陆
         self.user_info.update(info)
         # 装载Cookie
