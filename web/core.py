@@ -271,6 +271,8 @@ class User:
             # 成功登陆
             return {'code':'1','msg':'登陆成功'}
 
+
+
     @login_check
     def save_login(self):
         try:
@@ -281,6 +283,14 @@ class User:
             return False
         else:
             return True
+
+    @property
+    def account(self):
+        """
+        返回职教云账号
+        :return: 返回职教云账号
+        """
+        return self.login_info['userName']
 
     @property
     @login_check
@@ -814,6 +824,31 @@ class Course:
                 '用户{0} 为 {1} 添加评论：{2}[{3}星] 失败！失败原因：{4}'.format(self.user.id, cell_id, content, star, res_json['msg']))
             return False
 
+    # FROM LITE-CORE
+    def change_corseware(self, course_id, class_id, cell_id, cell_name):
+        # 重置INFO_GET
+        headers = the_headers.copy()
+        headers.update({
+            'Host': 'zjy2.icve.com.cn',
+            'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36 Edg/93.0.961.52",
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9'
+        })
+        form_load = {
+            'courseOpenId': course_id,
+            'openClassId': class_id,
+            'cellId': cell_id,
+            'cellName': cell_name
+        }
+
+        res = self.__s.post(url='https://zjy2.icve.com.cn/api/common/Directory/changeStuStudyProcessCellData',
+                            data=form_load, headers=headers)
+        res_json = res.json()
+        if res_json['code'] == 1:
+            return True
+        else:
+            return False
 
 class Classes:
     def __init__(self, user: User):
