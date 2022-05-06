@@ -1,0 +1,37 @@
+html,body{
+    padding: 0 3px;
+    height: 100%;
+    width: 100%;
+    background-color: #ebebeb;
+    position: static;
+}
+.box_large{
+    border-radius: 50px;
+    background: #ebebeb;
+    box-shadow:  -35px -35px 70px #c8c8c8,
+             35px 35px 70px #ffffff;
+}
+.box_small{
+    border-radius: 50px;
+    background: #ebebeb;
+    box-shadow:  -17px -17px 34px #c8c8c8,
+                 17px 17px 34px #ffffff;
+}
+.box_middle{
+    border-radius: 50px;
+    background: #ebebeb;
+    box-shadow:  -25px -25px 50px #c8c8c8,
+                 25px 25px 50px #ffffff;
+}
+.box_round_large{
+    border-radius: 50px;
+    background: #ebebeb;
+    box-shadow:  -11px -11px 21px #c8c8c8,
+                 11px 11px 21px #ffffff;
+}
+.box_round_small{
+    border-radius: 50px;
+    background: #ebebeb;
+    box-shadow:  -4px -4px 8px #c8c8c8,
+                 4px 4px 8px #ffffff;
+}

@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% set page_name = 'ICVE-HELPER' %}
+{% block css %}
+    {{ super() }}
+    <style type="text/css">
+        body{
+            width: 100%;
+        
+        }
+        table{
+            width: 200px;
+            border: #4183C4 1px solid;
+            text-align: center;
+            overflow: hidden;
+        }
+        table thead{
+            border: #4183C4 1px solid;
+        }
+        table th{
+            width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .navBar{
+            list-style: none;
+            display: block;
+            font-size: 20px;
+            background-color: #4183C4;
+            min-height: 50px;
+        }
+        .navBar li{
+            display: inline;
+            margin-top: 25%;
+            background-color: #4183C4;
+        }
+        .navBar li:hover{
+            background-color: red;
+        }
+        .navBar li a{
+            text-decoration: none;
+            color: black;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="navBarBox">
+        <div>
+            <ul class="navBar">
+                <li><a href="">首页</a></li>
+                <li><a href="">未完成课件</a></li>
+                <li><a href="">未完成作业</a></li>
+            </ul>
+        </div>
+    </div>
+    <div>
+        <span class="title-large">
+            WELCOME
+        </span>
+    </div>
+    <div>
+        <span class="title-middle">当前任务名单</span>
+        <table style="width: 100%;border: #4183C4 1px solid">
+            <thead>
+                <tr>
+                    <th>
+                        用户
+                    </th>
+                    <th>
+                        任务
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>TEST11111111</td>
+                    <td>NEW11111111shkjdhfsjdfsdfhsjdkjdkshjkhkjhjkhjhjkhkjkh</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
