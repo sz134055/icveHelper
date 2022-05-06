@@ -250,6 +250,24 @@ class User:
             # 失败
             return {'code': '0', 'msg': res_json['msg']}
 
+    def login_from_session(self,info:dict):
+        # 用于将User更新为已经登陆
+        self.user_info.update(info)
+        # 装载Cookie
+        self.__s.cookies = utils.cookiejar_from_dict(info,cookiejar=None,overwrite=True)
+        # TOKEN保质期测试
+        course = Course(self)
+        course_info = course.all_course
+        if not isinstance(course_info,list):
+            # 重新登陆
+            self.login_info = self.user_info.copy()
+            login_status = self.login()
+            if login_status['code'] == '0':
+                return {'code':'0','mdg':'重新登陆失败：'+login_status['msg']}
+        else:
+            # 成功登陆
+            return {'code':'1','msg':'登陆成功'}
+
     @login_check
     def save_login(self):
         try:
