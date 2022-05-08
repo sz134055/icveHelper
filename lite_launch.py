@@ -392,9 +392,7 @@ try:
                                     break
 
                             if not is_comment:
-                                my_course.add_comment(cell['id'], course_choose_info['courseOpenId'],
-                                                      course_choose_info['openClassId'], content, star)
-                                progress.update(task_comment, completed=2,
+                                    progress.update(task_comment, completed=2,
                                                 description=f'[rgb(0,128,128)]{cell["name"]}[添加评论]', refresh=True)
 
                             progress.update(task_comment, completed=3, description=f'[rgb(0,128,128)]{cell["name"]}[完成评论]',
