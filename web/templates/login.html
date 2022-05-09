@@ -132,52 +132,7 @@
                 </div>
               </div>
 
-            <!--
-            <div class="layui-form-item">
-              <label class="layui-form-label">选择框</label>
-              <div class="layui-input-block">
-                <select name="interest" lay-filter="aihao">
-                  <option value=""></option>
-                  <option value="0">写作</option>
-                  <option value="1">阅读</option>
-                  <option value="2">游戏</option>
-                  <option value="3">音乐</option>
-                  <option value="4">旅行</option>
-                </select>
-              </div>
-            </div>
-            
-            <div class="layui-form-item">
-              <label class="layui-form-label">复选框</label>
-              <div class="layui-input-block">
-                <input type="checkbox" name="like[write]" title="写作">
-                <input type="checkbox" name="like[read]" title="阅读">
-                <input type="checkbox" name="like[daze]" title="发呆">
-              </div>
-            </div>
-            
-            <div class="layui-form-item">
-              <label class="layui-form-label">开关</label>
-              <div class="layui-input-block">
-                <input type="checkbox" name="close" lay-skin="switch" lay-text="ON|OFF">
-              </div>
-            </div>
-            
-            <div class="layui-form-item">
-              <label class="layui-form-label">单选框</label>
-              <div class="layui-input-block">
-                <input type="radio" name="sex" value="男" title="男" checked="">
-                <input type="radio" name="sex" value="女" title="女">
-              </div>
-            </div>
-        
-            <div class="layui-form-item layui-form-text">
-              <label class="layui-form-label">文本域</label>
-              <div class="layui-input-block">
-                <textarea placeholder="请输入内容" class="layui-textarea" name="desc"></textarea>
-              </div>
-            </div>
-           -->
+
             <div class="layui-form-item">
               <div class="layui-input-block">
                 <button type="button" class="layui-btn layui-btn-normal" id="LAY-component-form-setval">生成其他信息</button>
@@ -196,67 +151,6 @@
         
     </div>
 
-    <script>
-        var makeUUID = function(){
-            var s = [];
-            var hexDigits = "0123456789abcdef";
-            for (var i = 0; i < 36; i++) {
-                s[i] = hexDigits.substr(Math.floor(Math.random() * 0x10), 1);
-            }
-            s[14] = "4";  // bits 12-15 of the time_hi_and_version field to 0010
-            s[19] = hexDigits.substr((s[19] & 0x3) | 0x8, 1);  // bits 6-7 of the clock_seq_hi_and_reserved to 01
-            s[8] = s[13] = s[18] = s[23] = "";
-        
-            var uuid = s.join("");
-            return uuid;
-        }
-
-        layui.use(['layer', 'form', 'element'], function(){
-            var layer = layui.layer;
-            var form = layui.form;
-            var element = layui.element;
-            
-            //……
-            //你的代码都应该写在这里面
-            form.render();
-            //表单取值
-            layui.$('#LAY-component-form-getval').on('click', function(){
-                var data = form.val('loginForm');
-                alert(JSON.stringify(data));
-            });
-            
-            //表单赋值
-            layui.$('#LAY-component-form-setval').on('click', function(){
-                form.val('loginForm', {
-                    'app':'2.8.45',
-                    'os':'15.0',
-                    'device':'iPhone',
-                    'clientId':makeUUID
-                });
-            });
-            /*
-            layui.$('#whyNeedMore').onclick = function () {
-                layer.open({
-                    type:1,
-                    title:'为什么需要更多信息',
-                    content:$('#questionBox')
-                });
-            };
-            */
-            layui.$('#whyNeedMore').on('click',function () {
-                layer.open({
-                    type:1,
-                    title:'为什么需要更多信息',
-                    content:layui.$('#questionBox')
-                });
-            });
-        });
-        
-        window.onload =function () {
-                document.getElementById('LAY-component-form-setval').click();
-        }
-            
-    </script>
 {% endblock %}
 
 {% block outBody %}
