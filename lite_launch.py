@@ -36,7 +36,7 @@ def broadcast():
         console.print(res_json['time'])
         console.print(res_json['content'],style=res_json['style'])
 # 检查更新
-check_update(version, build)
+#check_update(version, build)
 
 
 def uuid_get(remake=False):
@@ -162,7 +162,7 @@ try:
         # 登陆
         console.print('版本：' + version, style='red')
         console.print('-' * 20)
-        broadcast()
+        #broadcast()
         console.print('-'*20)
         login_info['userName'] = console.input('请输入你的职教云账号\n')
         login_info['userPwd'] = console.input('\n请输入你的职教云密码\n[red]注意：密码不会显示出来[/red]\n', password=True)
