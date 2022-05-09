@@ -1,5 +1,3 @@
-from math import remainder
-from re import I
 from flask import Blueprint,render_template
 
 mine_bp = Blueprint('mine',__name__)

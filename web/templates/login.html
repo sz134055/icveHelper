@@ -2,7 +2,7 @@
 {% set page_name = 'ICVE-HELPER' %}
 {% block css %}
     <link rel="stylesheet" href="{{ url_for('static',filename='css/font.css') }}">
-    <script type="text/javascript" src="{{ url_for('static',filename='js/index.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static',filename='js/login.js') }}"></script>
     <style>
         html,body{
             height: 100%;
@@ -50,9 +50,19 @@
     </div>
     <div class="main_box">
         <div class="info_box">
-            <h3>当前状态</h3>
-            <p>当前用户：<span id="nowUser">获取中...</span></p>
-            <p id="nowInfo">获取中...</p>
+            <h2>登陆并加入队列</h2>
+            <label for="account">账号</label>
+            <input type="text" id="account" placeholder="职教云账号">
+            <label for="pswd">密码</label>
+            <input type="password" id="pswd" placeholder="职教云密码">
+            <label for="app">APP版本</label>
+            <input type="text" id="app" placeholder="职教云APP版本">
+            <label for="os">设备版本</label>
+            <input type="text" id="os" placeholder="模拟登陆设备的版本号，如iOS15.0">
+            <label for="device">设备型号</label>
+            <input type="text" id="device" placeholder="模拟登陆设备的版本号，如iPhone 11">
+            <label for="clientId">ClientId</label>
+            <input type="text" id="clientId" placeholder="模拟登陆设备的UUID，无-间隔">
         </div>
     </div>
 
