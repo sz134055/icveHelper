@@ -170,10 +170,11 @@ class User:
         if 'iPhone' or 'iphone' in self.login_info['equipmentModel']:
             # iOS
             self.device_type = 'ios'
-
+            '''
             if len(self.login_info['equipmentApiVersion']) < 6:
                 # 短版本号补0
                 self.login_info['equipmentApiVersion'] += '.0'
+            '''
             the_headers.update({
                 'User-Agent': 'yktIcve/{0} (com.66ykt.66yktteacherzhihui; build:{1}; iOS {2})'.format(
                     icve_version['ios']['version'], icve_version['ios']['build'],
@@ -211,16 +212,42 @@ class User:
 
             return device_id
 
-        new_headers = the_headers.copy()
 
+
+        def new_get_device():
+            def md5it(content=None):
+                if content:
+                    md5 = hashlib.md5()
+                    md5.update(content.encode("utf-8"))
+                    return md5.hexdigest()
+                else:
+                    return ''
+
+            # need_info = [设备名，设备系统版本号，职教云版本号，时间戳]
+            need_info = [self.login_info['equipmentModel'], self.login_info['equipmentApiVersion'],
+                         icve_version[self.device_type]['version']]
+            device_id = ''
+            for i in range(0, len(need_info)):
+                device_id = md5it(device_id) + need_info[i]
+            emit = str(int(time.time())) + '000'
+            device_id = md5it(device_id) + emit
+            device_id = md5it(device_id)  # 最终加密结果
+
+            new_headers.update({
+                'emit':emit,
+                'device':device_id
+            })
+
+
+        new_headers = the_headers.copy()
         # EMIT
-        emit = str(int(time.time())) + '000'
+        #emit = str(int(time.time())) + '000'
         new_headers.update({
-            'emit': emit,
-            'device': get_device(emit),
+            #'emit': emit,
+            #'device': get_device(emit),
             'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
         })
-
+        new_get_device()
         # 装载headers
         self.__s.headers.update(new_headers)
 
@@ -336,7 +363,7 @@ class User:
         用户类型
         :return: 用户类型：学生或老师
         """
-        if self.user_info['userType'] == '1':
+        if self.user_info['userType'] == 1:
             return '学生'
         else:
             return '教职工'

@@ -32,7 +32,7 @@ layui.use(['layer', 'form', 'element'], function(){
     //表单赋值
     layui.$('#LAY-component-form-setval').on('click', function(){
         form.val('loginForm', {
-            'app':'2.8.45',
+            'app':'2.8.43',
             'os':'15.0',
             'device':'iPhone 11',
             'clientId':makeUUID
@@ -64,7 +64,7 @@ layui.use(['layer', 'form', 'element'], function(){
                     layer.msg(data.msg, {icon: 1});
                     setTimeout(function(){
                         window.location.href='/';
-                    },5000);
+                    },3000);
                 }else {
                     layer.msg(data.msg, {icon: 5});
                 }
@@ -77,5 +77,5 @@ layui.use(['layer', 'form', 'element'], function(){
 });
 
 window.onload =function () {
-        document.getElementById('LAY-component-form-setval').click();
+    document.getElementById('LAY-component-form-setval').click();
 }
