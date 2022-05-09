@@ -170,6 +170,7 @@ class User:
         if 'iPhone' or 'iphone' in self.login_info['equipmentModel']:
             # iOS
             self.device_type = 'ios'
+
             if len(self.login_info['equipmentApiVersion']) < 6:
                 # 短版本号补0
                 self.login_info['equipmentApiVersion'] += '.0'

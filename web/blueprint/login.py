@@ -1,15 +1,16 @@
-from flask import Blueprint, request, jsonify,render_template
+from flask import Blueprint, request, jsonify, render_template
 from web.core import User
-from web.datebase import insert,get_info
+from web.datebase import insert, get_info
 
 login_bp = Blueprint('login', __name__)
+
 
 @login_bp.route('/')
 def index():
     return render_template('login.html')
 
 
-@login_bp.route('/add')
+@login_bp.route('/add',methods=['POST'])
 def add_user():
     try:
         me = User({
@@ -52,6 +53,6 @@ def add_user():
             else:
                 return jsonify({'code': '1', 'msg': '你已在队列当中，如有需要请自行查询序号等信息'})
         else:
-            return jsonify({'code': '0', 'msg': '登陆信息验证失败，请检查你的登陆信息是否正确！'})
+            return jsonify({'code': '0', 'msg': login_status['msg']})
     except KeyError:
         return jsonify({'code': '0', 'msg': '缺少登陆信息！'})

@@ -21,9 +21,12 @@ layui.use(['layer', 'form', 'element'], function(){
     //你的代码都应该写在这里面
     form.render();
     //表单取值
+
     layui.$('#LAY-component-form-getval').on('click', function(){
         var data = form.val('loginForm');
-        alert(JSON.stringify(data));
+        layer.load(2);
+        login(data);
+        //alert(JSON.stringify(data));
     });
 
     //表单赋值
@@ -39,12 +42,37 @@ layui.use(['layer', 'form', 'element'], function(){
         layer.open({
             type:1,
             title:'为什么需要更多信息',
-            content:layui.$('#questionBox')
+            content:layui.$('#questionBox'),
+            cancel:function () {
+                $('#questionBox').css('display','none');
+                return true;
+            }
         });
     });
 
-    var login = function () {
 
+    var login = function (loginInfo) {
+        layer.closeAll('loading'); //关闭加载层
+        $.ajax('/login/add',{
+            type: 'POST',
+            timeout:30000,
+            data:loginInfo,
+            dataType:'json',
+            success:function (data,status) {
+
+                if (data.code==='1'){
+                    layer.msg(data.msg, {icon: 1});
+                    setTimeout(function(){
+                        window.location.href='/';
+                    },5000);
+                }else {
+                    layer.msg(data.msg, {icon: 5});
+                }
+            },
+            error:function () {
+                layer.msg('服务器无响应，请稍后再试', {icon: 5});
+            }
+        })
     }
 });
 
