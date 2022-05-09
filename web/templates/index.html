@@ -1,81 +1,59 @@
 {% extends 'base.html' %}
 {% set page_name = 'ICVE-HELPER' %}
 {% block css %}
-    {{ super() }}
-    <style type="text/css">
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/font.css') }}">
+    <script type="text/javascript" src="{{ url_for('static',filename='js/index.js') }}"></script>
+    <style>
+        html,body{
+            height: 100%;
+        }
         body{
-            width: 100%;
-        
+            background: linear-gradient(140deg, #EADEDB 7%, #BC70A4 53%, #BFD641 80%) no-repeat center;
+            background-size: cover;
         }
-        table{
-            width: 200px;
-            border: #4183C4 1px solid;
+        .main_box{
             text-align: center;
-            overflow: hidden;
-        }
-        table thead{
+            width: 100%;
             border: #4183C4 1px solid;
+            background-color: rgba(60,196,196,0.3);
         }
-        table th{
-            width: 100px;
-            overflow: hidden;
-            text-overflow: ellipsis;
+        .info_box{
+            text-align: center;
+
         }
-        .navBar{
-            list-style: none;
-            display: block;
-            font-size: 20px;
-            background-color: #4183C4;
-            min-height: 50px;
+        .nav_box{
+            text-align: center;
+            padding: 5% 0;
         }
-        .navBar li{
-            display: inline;
-            margin-top: 25%;
-            background-color: #4183C4;
-        }
-        .navBar li:hover{
-            background-color: red;
-        }
-        .navBar li a{
+        .nav_box a{
             text-decoration: none;
             color: black;
+            transition: color 50ms;
+        }
+        .nav_box a:hover{
+            color: #4183C4;
+            text-shadow: 0 0 10px #B5D6FC,0 0 20px #B5D6FC,0 0 30px #B5D6FC,0 0 40px #B5D6FC;
+        }
+        .nav_box a:active{
+            text-shadow: none;
         }
     </style>
+
 {% endblock %}
 {% block content %}
-    <div class="navBarBox">
-        <div>
-            <ul class="navBar">
-                <li><a href="">首页</a></li>
-                <li><a href="">未完成课件</a></li>
-                <li><a href="">未完成作业</a></li>
-            </ul>
+    <div class="nav_box">
+        <a href="/">首页</a>
+        /
+        <a href="/login/">登陆并加入队列</a>
+        /
+        <a href="/mine/">查询我的信息</a>
+    </div>
+    <div class="main_box">
+        <div class="info_box">
+            <h3>当前状态</h3>
+            <p>当前用户：<span id="nowUser">获取中...</span></p>
+            <p id="nowInfo">获取中...</p>
         </div>
     </div>
-    <div>
-        <span class="title-large">
-            WELCOME
-        </span>
-    </div>
-    <div>
-        <span class="title-middle">当前任务名单</span>
-        <table style="width: 100%;border: #4183C4 1px solid">
-            <thead>
-                <tr>
-                    <th>
-                        用户
-                    </th>
-                    <th>
-                        任务
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>TEST11111111</td>
-                    <td>NEW11111111shkjdhfsjdfsdfhsjdkjdkshjkhkjhjkhjhjkhkjkh</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+
 {% endblock %}

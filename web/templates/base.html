@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{page_name}}</title>
+    <!-- 引入 layui -->
+    <link rel="stylesheet" href="{{ url_for('static',filename='layui/css/layui.css') }}">
+    <script src="{{ url_for('static',filename='layui/layui.js') }}"></script>
+    <!-- 引入 layui -->
+
+    <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
     {% block css %}
         <link rel="stylesheet" href="{{ url_for('static',filename='css/font.css') }}">
         <link rel="stylesheet" href="{{ url_for('static',filename='css/base.css') }}">
@@ -14,4 +20,6 @@
         CONTENT HERE
     {% endblock %}
 </body>
+    {% block outBody %}
+    {% endblock %}
 </html>

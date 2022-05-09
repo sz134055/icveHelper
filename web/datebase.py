@@ -1,6 +1,6 @@
 import sqlite3
 
-conn = sqlite3.connect('icve.db')
+conn = sqlite3.connect('icve.db',check_same_thread=False)
 
 cur = conn.cursor()
 
@@ -53,19 +53,23 @@ def insert(
                 equipmentModel, equipmentApiVersion, clientId, email, star, content))
 
         conn.commit()
-        return {'code': '1', 'msg': '保存成功，序号：' + str(cur.lastrowid)}
+        return {'code': '1', 'msg': '成功加入队列，序号为：' + str(cur.lastrowid)}
     except sqlite3.IntegrityError:
         return {'code': '0', 'msg': '用户已存在'}
 
 
-def get_info(id=None, userId=None):
-    if not id and not userId:
+def get_info(id=None, userId=None,account=None):
+    if not id and not userId and not account:
         return ()
     elif id:
         cur.execute('select * from user where id=?', (id,))
     elif userId:
         cur.execute('select * from user where userId=?', (userId,))
+    elif account:
+        cur.execute('select * from user where userName=?', (account,))
+
     result = cur.fetchall()
+
     if result:
         return result[0]
     else:
@@ -91,10 +95,11 @@ def delet_one(wid=None):
 
 if __name__ == '__main__':
     # TEST
-    info = insert(1, '128', 'TheName', '112233', 'IAMTOKEN', 'JOJO', '2020123456', 'https://www.noexist.com',
+
+    info = insert(1, '129', 'TheName', '112233', 'IAMTOKEN', 'JOJO', '2020123456', 'https://www.noexist.com',
                   'TheSchool', 'ID123', 'iPhone 11', '15.0', 'ashdkahasjkdsa', 'eamil@.com')
     print(info)
     print(get_info(1))
     print(get_info(userId=123))
     print(get_one())
-    delet_one()
+    #delet_one()
