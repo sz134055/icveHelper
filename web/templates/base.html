@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{page_name}}</title>
+    <!-- 引入 layui.css -->
+    <link rel="stylesheet" href="//unpkg.com/layui@2.6.8/dist/css/layui.css">
+    <!-- 引入 layui.js -->
+    <script src="//unpkg.com/layui@2.6.8/dist/layui.js">
+
     {% block css %}
         <link rel="stylesheet" href="{{ url_for('static',filename='css/font.css') }}">
         <link rel="stylesheet" href="{{ url_for('static',filename='css/base.css') }}">
