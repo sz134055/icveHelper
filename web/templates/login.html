@@ -1,10 +1,59 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>ICVE登陆验证</title>
-</head>
-<body>
-    <h1></h1>
-</body>
-</html>
+{% extends 'base.html' %}
+{% set page_name = 'ICVE-HELPER' %}
+{% block css %}
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/font.css') }}">
+    <script type="text/javascript" src="{{ url_for('static',filename='js/index.js') }}"></script>
+    <style>
+        html,body{
+            height: 100%;
+        }
+        body{
+            background: linear-gradient(140deg, #EADEDB 7%, #BC70A4 53%, #BFD641 80%) no-repeat center;
+            background-size: cover;
+        }
+        .main_box{
+            text-align: center;
+            width: 100%;
+            border: #4183C4 1px solid;
+            background-color: rgba(60,196,196,0.3);
+        }
+        .info_box{
+            text-align: center;
+
+        }
+        .nav_box{
+            text-align: center;
+            padding: 5% 0;
+        }
+        .nav_box a{
+            text-decoration: none;
+            color: black;
+            transition: color 50ms;
+        }
+        .nav_box a:hover{
+            color: #4183C4;
+            text-shadow: 0 0 10px #B5D6FC,0 0 20px #B5D6FC,0 0 30px #B5D6FC,0 0 40px #B5D6FC;
+        }
+        .nav_box a:active{
+            text-shadow: none;
+        }
+    </style>
+
+{% endblock %}
+{% block content %}
+    <div class="nav_box">
+        <a href="/">首页</a>
+        /
+        <a href="/login/">登陆并加入队列</a>
+        /
+        <a href="/mine/">查询我的信息</a>
+    </div>
+    <div class="main_box">
+        <div class="info_box">
+            <h3>当前状态</h3>
+            <p>当前用户：<span id="nowUser">获取中...</span></p>
+            <p id="nowInfo">获取中...</p>
+        </div>
+    </div>
+
+{% endblock %}

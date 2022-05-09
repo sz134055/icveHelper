@@ -1,11 +1,15 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify,render_template
 from web.core import User
 from web.datebase import insert,get_info
 
 login_bp = Blueprint('login', __name__)
 
-
 @login_bp.route('/')
+def index():
+    return render_template('login.html')
+
+
+@login_bp.route('/add')
 def add_user():
     try:
         me = User({
