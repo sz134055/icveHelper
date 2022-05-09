@@ -49,6 +49,14 @@
         .title_box p{
             font-size: 35px;
         }
+        .main_title_2{
+            font-size: 15px;
+            font-weight: bold;
+        }
+        .question_box{
+            margin-bottom: 10px;
+            padding: 0 5px;
+        }
     </style>
 
 {% endblock %}
@@ -80,7 +88,7 @@
             <input type="text" id="clientId" placeholder="模拟登陆设备的UUID，无-间隔">
         </form>
         -->
-        <form class="layui-form" action="" lay-filter="loginForm">
+        <form class="layui-form layui-form-pane" action="" lay-filter="loginForm">
             <div class="layui-form-item">
               <label class="layui-form-label">账号</label>
               <div class="layui-input-block">
@@ -114,9 +122,16 @@
               <div class="layui-form-item">
                 <label class="layui-form-label">ClientId</label>
                 <div class="layui-input-block">
-                  <input type="text" name="clientId" lay-verify="title" autocomplete="off" placeholder="模拟" class="layui-input">
+                  <input type="text" name="clientId" lay-verify="title" autocomplete="off" placeholder="模拟登陆设备的UUID" class="layui-input">
                 </div>
               </div>
+             <div class="layui-form-item">
+                <label class="layui-form-label">邮箱地址</label>
+                <div class="layui-input-block">
+                  <input type="email" name="email" lay-verify="email" autocomplete="off" placeholder="用于通知你任务进度的邮箱地址" class="layui-input">
+                </div>
+              </div>
+
             <!--
             <div class="layui-form-item">
               <label class="layui-form-label">选择框</label>
@@ -171,6 +186,11 @@
                 <button type="submit" class="layui-btn" lay-submit="" lay-filter="demo1">立即提交</button>
                 -->
             </div>
+                <div style="text-align: center">
+                    <i class="layui-icon layui-icon-about"></i>
+                    <span id="whyNeedMore" style="text-align: center;color: #4183C4;text-decoration: #b4654d;margin-top: 5px;">为什么需要填写更多？</span>
+                </div>
+
             </div>
           </form>
         
@@ -214,8 +234,60 @@
                     'clientId':makeUUID
                 });
             });
-            window.onload = 
-        });  
+            /*
+            layui.$('#whyNeedMore').onclick = function () {
+                layer.open({
+                    type:1,
+                    title:'为什么需要更多信息',
+                    content:$('#questionBox')
+                });
+            };
+            */
+            layui.$('#whyNeedMore').on('click',function () {
+                layer.open({
+                    type:1,
+                    title:'为什么需要更多信息',
+                    content:layui.$('#questionBox')
+                });
+            });
+        });
+        
+        window.onload =function () {
+                document.getElementById('LAY-component-form-setval').click();
+        }
             
     </script>
+{% endblock %}
+
+{% block outBody %}
+    <div class="main_box" style="display: none;padding: 5px" id="questionBox">
+        <div class="question_box">
+            <p class="main_title_2">为什么需要其他信息？</p>
+            <p>本脚本基于职教云APP的API制作，因此需要一些必要的设备信息来模拟登陆</p>
+
+        </div>
+        <div class="question_box">
+            <p class="main_title_2">设备信息会影响我的职教云账号吗？</p>
+            <p>不会影响，需求仅仅是为了模拟登陆，提供填写仅仅是为了迎合定制化需求</p>
+        </div>
+        <div class="question_box">
+             <p class="main_title_2">这些信息该如何填写？</p>
+            <p>输入框中已经给出提示，默认已自动生成，同时可自行填写或点击生成按钮</p>
+
+        </div>
+        <div class="question_box">
+            <p class="main_title_2" style="color: red">会保存我的职教云账号密码吗？</p>
+            <p><b>会保存。</b>出于节省服务器开支考虑，脚本仅仅为单线程运行，即同时间只开始一个人的任务，为了兼顾多人需求，采用队列的方式。登陆验证可成功登陆职教云后，你的账户信息（包括密码）会被保存至数据库待脚本调用并开始任务，<b>当任务失败或结束时，你的账户信息会从数据库中删除</b>，我没有兴趣也不会保存你的个人账户信息。</p>
+
+        </div>
+        <div class="question_box">
+            <p class="main_title_2">我如何知道我的任务进度？</p>
+            <p>任务开始、中断、结束时，系统都会发送一封电子邮件通知。若需要得知你当前所在队列序号，请自行查询并比对当前任务序号来知晓何时执行你的任务。</p>
+        </div>
+        <!--
+        <div class="question_box" style="text-align: center">
+            <button type="button" class="layui-btn layui-btn-danger layui-layer-close" style="position: center">我明白了</button>
+        </div>
+         -->
+    </div>
 {% endblock %}
