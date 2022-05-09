@@ -12,8 +12,8 @@ from web.blueprint.mine import mine_bp
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'ICVE-FLASK-WEB'
-# app.config['ENV'] = 'development'
-app.config['ENV'] = 'production'
+app.config['ENV'] = 'development'
+#app.config['ENV'] = 'production'
 app.config['DEBUG'] = True
 # session.permanent = True
 app.config['PERMANENT_SESSION_LIFETIM'] = timedelta(days=3)  # SESSION保质期
