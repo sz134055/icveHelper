@@ -4,6 +4,7 @@ from web.datebase import insert, delet_one, get_one
 from web.core import User, Course
 from web.email2c import Mail
 from web import coon
+from web import logger
 
 currentId = 0  # 当前用户序号
 currentUserId = 0  # 当前用户ID
@@ -60,7 +61,10 @@ def fakeTest():
 
 if __name__ == '__main__':
     if coon.get('debug', 'debug') == 'true':
+        logger.info('FAKE运行模式')
+        print('FAKE运行模式')
         fakeTest()
+
     else:
         while True:
             # 程序主循环
@@ -179,6 +183,10 @@ if __name__ == '__main__':
                                 time.sleep(2)
 
                             time.sleep(2)
+                            if not user_info[16] or not user_info[15]:
+                                currentInfo = '用户选择跳过评论'
+                                continue
+
                             currentInfo = f'当前课件 {course["courseName"]} - {cell["name"]}({cell["id"]}) 评论任务开始'
                             comment_info = my_course.all_comment(cell['id'], course['courseOpenId'], course['openClassId'],
                                                                  1)
