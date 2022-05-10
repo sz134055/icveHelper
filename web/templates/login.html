@@ -77,43 +77,43 @@
             <div class="layui-form-item">
               <label class="layui-form-label">账号</label>
               <div class="layui-input-block">
-                <input type="text" name="account" lay-verify="required|title" autocomplete="off" placeholder="职教云账号" class="layui-input">
+                <input type="text" name="account" lay-verify="required|title" autocomplete="off" placeholder="职教云账号" class="layui-input" required>
               </div>
             </div>
             <div class="layui-form-item">
               <label class="layui-form-label">密码</label>
               <div class="layui-input-block">
-                <input type="password" name="required|pswd" placeholder="职教云密码" autocomplete="off" class="layui-input" lay-verify="required|text">
+                <input type="password" name="pswd" placeholder="职教云密码" autocomplete="off" class="layui-input" lay-verify="required|text" required>
               </div>
             </div>
             <div class="layui-form-item">
                 <label class="layui-form-label">APP版本</label>
                 <div class="layui-input-block">
-                  <input type="text" name="app" lay-verify="required|title" autocomplete="off" placeholder="职教云APP版本" class="layui-input">
+                  <input type="text" name="app" lay-verify="required|title" autocomplete="off" placeholder="职教云APP版本" class="layui-input" required>
                 </div>
               </div>
               <div class="layui-form-item">
                 <label class="layui-form-label">设备版本</label>
                 <div class="layui-input-block">
-                  <input type="text" name="os" lay-verify="required|title" autocomplete="off" placeholder="模拟登陆设备的版本号，如iOS15.0" class="layui-input">
+                  <input type="text" name="os" lay-verify="required|title" autocomplete="off" placeholder="模拟登陆设备的版本号，如iOS15.0" class="layui-input" required>
                 </div>
               </div>
               <div class="layui-form-item">
                 <label class="layui-form-label">设备型号</label>
                 <div class="layui-input-block">
-                  <input type="text" name="device" lay-verify="required|title" autocomplete="off" placeholder="模拟登陆设备的版本号，如iPhone 11" class="layui-input">
+                  <input type="text" name="device" lay-verify="required|title" autocomplete="off" placeholder="模拟登陆设备的版本号，如iPhone 11" class="layui-input" required>
                 </div>
               </div>
               <div class="layui-form-item">
                 <label class="layui-form-label">ClientId</label>
                 <div class="layui-input-block">
-                  <input type="text" name="clientId" lay-verify="required|title" autocomplete="off" placeholder="模拟登陆设备的UUID" class="layui-input">
+                  <input type="text" name="clientId" lay-verify="required|title" autocomplete="off" placeholder="模拟登陆设备的UUID" class="layui-input" required>
                 </div>
               </div>
              <div class="layui-form-item">
                 <label class="layui-form-label">邮箱地址</label>
                 <div class="layui-input-block">
-                  <input type="email" name="email" lay-verify="required|email" autocomplete="off" placeholder="用于通知你任务进度的邮箱地址" class="layui-input">
+                  <input type="email" name="email" lay-verify="required|email" autocomplete="off" placeholder="用于通知你任务进度的邮箱地址" class="layui-input" required>
                 </div>
               </div>
             <div class="layui-form-item">
@@ -124,34 +124,7 @@
                 </div>
                 <div class="layui-form-mid layui-word-aux" style="width: max-content;">启用会自动对课件评论</div>
             </div>
-            <!--
-            <div class="layui-form-item starSwitch">
-                <label class="layui-form-label">评分</label>
-                <div class="layui-input-block">
-                    <select name="star">
-                        <option value="5" selected="">5星</option>
-                        <option value="4.5">4.5星</option>
-                        <option value="4">4星</option>
-                        <option value="3.5">3.5星</option>
-                        <option value="3">3星</option>
-                        <option value="2.5">2.5星</option>
-                        <option value="2">2星</option>
-                        <option value="1.5">1.5星</option>
-                        <option value="1">1星</option>
-                        <option value="0.5">0.5星</option>
-                    </select>
-                </div>
-            </div>
-            <div class="layui-form-item commentInput">
 
-                <label class="layui-form-label">评论</label>
-                <div class="layui-input-block">
-                    <input type="email" name="comment" lay-verify="text" autocomplete="off" placeholder="对课件的简短评论" class="layui-input">
-                </div>
-
-            </div>
-
-             -->
 
             <div class="layui-form-item" id="btnBox">
               <div class="layui-input-block">
@@ -231,7 +204,7 @@
 
         <label class="layui-form-label">评论</label>
         <div class="layui-input-block">
-            <input type="email" name="comment" lay-verify="required|text" autocomplete="off" placeholder="对课件的简短评论" class="layui-input">
+            <input type="email" name="comment" lay-verify="required|text" autocomplete="off" placeholder="对课件的简短评论" class="layui-input" required>
         </div>
 
     </div>

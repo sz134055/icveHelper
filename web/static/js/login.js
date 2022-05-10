@@ -24,6 +24,14 @@ layui.use(['layer', 'form', 'element'], function(){
 
     layui.$('#LAY-component-form-getval').on('click', function(){
         var data = form.val('loginForm');
+
+        for (var prop in data){
+            if (data[prop] === ''){
+                layer.msg('请确认所有项目都填写完毕', {icon: 5});
+                return;
+            }
+        }
+
         layer.load(2);
         login(data);
         //alert(JSON.stringify(data));
