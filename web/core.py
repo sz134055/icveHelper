@@ -2,91 +2,19 @@ import requests
 from requests import utils
 import time
 import hashlib
-import logging
-from configparser import ConfigParser
-import os
+
 from random import randint
+from web import get_now_path
+from web.config import coon
+from web.logger import Logger
+
+# 初始化LOGGER
+log = Logger(debug_status=bool(coon.get('debug','debug')),name='CORE',file=True)
+logger = log.get_logger()
+logger.info('MSG FROM CORE')
+WORK_PATH = get_now_path()
 
 requests.packages.urllib3.disable_warnings()
-# 获取当前工作目录
-WORK_PATH = os.path.split(os.path.realpath(__file__))[0]
-
-
-# 初始化LOGGING
-def __format_switch(debug_status=None):
-    global log_status
-    if not debug_status:
-        debug_status = coon.get('logging', 'debug')
-
-    if debug_status == 'true':
-        # log_status = logging.DEBUG
-        return logging.Formatter('%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
-    elif debug_status == 'false':
-        log_status = logging.INFO
-        return logging.Formatter('%(asctime)s - %(levelname)s: %(message)s')
-    else:
-        logger.warning('你的设置文件LOGGING选项有错误，请务必为 true 或 flas，当前已默认视为选中 true')
-
-
-logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
-for logger_handler in logger.handlers:
-    logger.removeHandler(logger_handler)
-
-log_status = logging.DEBUG
-
-consloe_log = logging.StreamHandler()
-consloe_log.setLevel(log_status)
-consloe_log.setFormatter(__format_switch(debug_status='true'))
-
-logger.addHandler(consloe_log)
-
-if not os.path.exists(WORK_PATH + '/logs'):
-    try:
-        os.mkdir(WORK_PATH + '/logs')
-    except OSError:
-        logger.warning('创建日志文件失败，请尝试手动在当前目录下创建 logs 目录（文件夹）')
-
-# 配置文件初始化
-coon = ConfigParser()
-if not os.path.exists(WORK_PATH + '/setting.ini'):
-    logger.warning('找不到配置文件！请务必将自带的setting.ini放置于软件同一目录下')
-    raise FileNotFoundError('未能找到配置文件，请务必将自带的setting.ini放置于软件同一目录下')
-coon.read(WORK_PATH + '/setting.ini')
-
-
-# 设置LOGGING
-def __save_log(mark=None):
-    """
-    保存日志
-    :param mark: 标记，默认为None时将为随机数
-    :return: logging.FileHandler()
-    """
-    file_name = hashlib.md5(bytes(randint(1000, 9999))).hexdigest()
-    file_log = logging.FileHandler(filename=WORK_PATH + '/logs/' + file_name + '.log')
-    file_log.setFormatter(__format_switch(debug_status=coon.get('logging', 'debug')))
-    file_log.setLevel(log_status)
-
-    logger.info(f'文件保存已启用，保存名为：{file_name}')
-    return file_log
-
-
-# 刷新和添加Handler
-consloe_log.setFormatter(__format_switch(debug_status=coon.get('logging', 'debug')))
-consloe_log.setLevel(log_status)
-
-logger.addHandler(consloe_log)
-if coon.get('logging', 'file_save') == 'true':
-    logger.addHandler(__save_log())
-
-# DEBUG 提醒
-if log_status == logging.DEBUG:
-    logger.info('注意：目前已启动DEBUG模式，如需关闭请在同目录下 setting.ini 文件中将 logging中debug选项更改为 false')
-
-
-def get_logger():
-    return logger
-
 
 # 初始化requests
 # s = requests.session()
@@ -212,8 +140,6 @@ class User:
 
             return device_id
 
-
-
         def new_get_device():
             def md5it(content=None):
                 if content:
@@ -234,17 +160,16 @@ class User:
             device_id = md5it(device_id)  # 最终加密结果
 
             new_headers.update({
-                'emit':emit,
-                'device':device_id
+                'emit': emit,
+                'device': device_id
             })
-
 
         new_headers = the_headers.copy()
         # EMIT
-        #emit = str(int(time.time())) + '000'
+        # emit = str(int(time.time())) + '000'
         new_headers.update({
-            #'emit': emit,
-            #'device': get_device(emit),
+            # 'emit': emit,
+            # 'device': get_device(emit),
             'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
         })
         new_get_device()
@@ -278,28 +203,26 @@ class User:
             # 失败
             return {'code': '0', 'msg': res_json['msg']}
 
-    def login_from_session(self,info:dict=None):
+    def login_from_session(self, info: dict = None):
         if not info:
             info = self.login_info
 
         # 用于将User更新为已经登陆
         self.user_info.update(info)
         # 装载Cookie
-        self.__s.cookies = utils.cookiejar_from_dict(info,cookiejar=None,overwrite=True)
+        self.__s.cookies = utils.cookiejar_from_dict(info, cookiejar=None, overwrite=True)
         # TOKEN保质期测试
         course = Course(self)
         course_info = course.all_course
-        if not isinstance(course_info,list):
+        if not isinstance(course_info, list):
             # 重新登陆
             self.login_info = self.user_info.copy()
             login_status = self.login()
             if login_status['code'] == '0':
-                return {'code':'0','mdg':'重新登陆失败：'+login_status['msg']}
+                return {'code': '0', 'mdg': '重新登陆失败：' + login_status['msg']}
         else:
             # 成功登陆
-            return {'code':'1','msg':'登陆成功'}
-
-
+            return {'code': '1', 'msg': '登陆成功'}
 
     @login_check
     def save_login(self):
@@ -646,7 +569,6 @@ class Course:
                 while num <= long:
                     self.__s.cookies.clear()
 
-
                     form_load['studyNewlyTime'] = num
                     # res = requests.post(url='https://zjy2.icve.com.cn/api/common/Directory/stuProcessCellLog', data=form_load,headers=headers)
 
@@ -670,7 +592,7 @@ class Course:
                         logger.info(f'随机等待{wait}秒')
                         time.sleep(wait)
 
-                        num = get_next_long(num,long)
+                        num = get_next_long(num, long)
                         continue
                     else:
                         logger.warning(f'为课件{cell_id}添加时长失败：{res_json["msg"]}')
@@ -710,7 +632,7 @@ class Course:
                         logger.info(f'随机等待{wait}秒')
                         time.sleep(wait)
 
-                        now_page = get_next_page(now_page,page_long)
+                        now_page = get_next_page(now_page, page_long)
                         continue
                     else:
                         logger.warning(f'为课件 {cell_id} 添加页数失败：{res_json["msg"]}')
@@ -877,6 +799,7 @@ class Course:
             return True
         else:
             return False
+
 
 class Classes:
     def __init__(self, user: User):
