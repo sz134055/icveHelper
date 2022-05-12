@@ -3,6 +3,8 @@ from web import get_now_path
 
 conn = sqlite3.connect(get_now_path()+'/icve.db',check_same_thread=False)
 
+conn.row_factory = sqlite3.Row
+
 cur = conn.cursor()
 
 # 初始化建表（如果表不存在）
@@ -20,6 +22,7 @@ cur.execute("create table if not exists user ("
             "schoolId text,"
             "equipmentModel text,"
             "equipmentApiVersion text,"
+            "appVersion text,"
             "clientId text,"
             "email text,"
             "comment_star text,"
@@ -41,6 +44,7 @@ def insert(
         schoolId,
         equipmentModel,
         equipmentApiVersion,
+        appVersion,
         clientId,
         email,
         star='',
@@ -48,10 +52,10 @@ def insert(
 ):
     try:
         cur.execute(
-            "INSERT INTO user (userType, userId, userName, userPwd, newToken, displayName, employeeNumber, url, schoolName, schoolId,equipmentModel, equipmentApiVersion, clientId,email,comment_star,comment_content) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO user (userType, userId, userName, userPwd, newToken, displayName, employeeNumber, url, schoolName, schoolId,equipmentModel, equipmentApiVersion,appVersion, clientId,email,comment_star,comment_content) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 userType, userId, userName, userPwd, newToken, displayName, employeeNumber, url, schoolName, schoolId,
-                equipmentModel, equipmentApiVersion, clientId, email, star, content))
+                equipmentModel, equipmentApiVersion,appVersion, clientId, email, star, content))
 
         conn.commit()
         return {'code': '1', 'msg': '成功加入队列，序号为：' + str(cur.lastrowid)}
@@ -69,21 +73,21 @@ def get_info(id=None, userId=None,account=None):
     elif account:
         cur.execute('select * from user where userName=?', (account,))
 
-    result = cur.fetchall()
+    result = cur.fetchone()
 
     if result:
-        return result[0]
+        return result
     else:
-        return ()
+        return {}
 
 
 def get_one():
     cur.execute('SELECT * FROM user ORDER BY id LIMIT 1')
-    result = cur.fetchall()
+    result = cur.fetchone()
     if result:
-        return result[0]
+        return result
     else:
-        return ()
+        return {}
 
 
 def delet_one(wid=None):
@@ -98,7 +102,7 @@ if __name__ == '__main__':
     # TEST
 
     info = insert(1, '129', 'TheName', '112233', 'IAMTOKEN', 'JOJO', '2020123456', 'https://www.noexist.com',
-                  'TheSchool', 'ID123', 'iPhone 11', '15.0', 'ashdkahasjkdsa', 'eamil@.com')
+                  'TheSchool', 'ID123', 'iPhone 11', '15.0', '2.8.43','ashdkahasjkdsa', 'eamil@.com')
     print(info)
     print(get_info(1))
     print(get_info(userId=123))

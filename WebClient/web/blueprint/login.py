@@ -49,8 +49,8 @@ def add_user():
                 me.school_info['id'],
                 me.login_info['equipmentModel'],
                 me.login_info['equipmentApiVersion'],
-                me.login_info['clientId'],
                 request.form['app'],
+                me.login_info['clientId'],
                 user_email,
                 request.form.get('star'),
                 request.form.get('comment')

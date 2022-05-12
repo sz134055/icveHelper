@@ -5,8 +5,11 @@ from web.core import User, Course
 from web.email2c import Mail
 from web.config import coon
 # from web.logger import Logger
-from web.core import logger
+from web.logger import Logger
 import traceback
+
+log = Logger(name='COURSE', file=True)
+logger = log.get_logger()
 
 
 class Current:
@@ -54,8 +57,6 @@ currentTotalProcess = 0  # 当前总进度
 nextUser = True
 
 
-
-
 def pushEmail(recv, title, main_content, to_admin=False):
     content = """
     <div style="text-align:center;margin:50px 0">
@@ -75,7 +76,6 @@ def pushEmail(recv, title, main_content, to_admin=False):
 
 
 def fakeTest():
-
     while True:
         user_info = get_one()
         if user_info:
@@ -124,32 +124,27 @@ if __name__ == '__main__':
             user_info = get_one()  # 获取表顶部用户信息
             if user_info:
                 # 更新状态
-                now.id = user_info[0]
-                now.user = user_info[2]
-
-                now.info = f'目前用户序号为 {user_info[0]}'
+                now.id = user_info['id']
+                now.user = user_info['userId']
+                user_email = user_info['email']
+                now.info = f"目前用户序号为 {user_info['id']}"
 
                 now.info = '更新登陆状态'
                 me = User({
-                    'userType': user_info[1],
-                    'userId': user_info[2],
-                    'userName': user_info[3],
-                    'userPwd': user_info[4],
-                    'newToken': user_info[5],
-                    'displayName': user_info[6],
-                    'employeeNumber': user_info[7],
-                    'url': user_info[8],
-                    'schoolName': user_info[9],
-                    'schoolId': user_info[10],
-                    'equipmentModel': user_info[11],
-                    'equipmentApiVersion': user_info[12],
-                    'clientId': user_info[13]
+                    'equipmentAppVersion':user_info['appVersion'],
+                    'appVersion':user_info['appVersion'],
+                    'userName': user_info['userName'],
+                    'userPwd': user_info['userPwd'],
+                    'equipmentModel': user_info['equipmentModel'],
+                    'equipmentApiVersion': user_info['equipmentApiVersion'],
+                    'clientId': user_info['clientId']
                 })
                 try:
-                    login_status = me.login_from_session()
+                    #login_status = me.login_from_session()
+                    login_status = me.login()
 
                     if login_status['code'] == '0':
-                        now.info = f'序号 {user_info[0]} 的用户无法登陆'
+                        now.info = f'序号 {now.id} 的用户无法登陆'
                         # 删除这个无法登陆的用户
                         delet_one()
 
@@ -161,15 +156,15 @@ if __name__ == '__main__':
                         <p>或者在此处下载所有文件自助完成相应操作<a href='https://gitee.com/saucer216/icve-helper/tree/main/release/Lite/source'>ICVE-HELPER LITE</a></p>
                         </div>
                         """
-                        # pushEmail(user_info[14], 'OoOpS~ 你的ICVE账户登陆遇到问题', mail_info)
+                        pushEmail(user_email, 'OoOpS~ 你的ICVE账户登陆遇到问题', mail_info)
                         continue
 
-                    now.info = f'序号 {user_info[0]} 用户登陆成功，等待获取所有课程'
+                    now.info = f'序号 {now.id} 用户登陆成功，等待获取所有课程'
                     my_course = Course(me)
-                    now.info = f'正在获取序号 {user_info[0]} 用户所有课程'
+                    now.info = f'正在获取序号 {now.id} 用户所有课程'
                     all_my_course = my_course.all_course
                     if not isinstance(all_my_course, list):
-                        now.info = f'获取序号 {user_info[0]} 用户课程失败'
+                        now.info = f'获取序号 {now.id} 用户课程失败'
                         delet_one()
 
                         mail_info = f"""
@@ -180,10 +175,10 @@ if __name__ == '__main__':
                                    <p>或者在此处下载所有文件自助完成相应操作<a href='https://gitee.com/saucer216/icve-helper/tree/main/release/Lite/source'>ICVE-HELPER LITE</a></p>
                                    </div>
                                    """
-                        pushEmail(user_info[14], 'OoOpS~ 你的ICVE账户登陆遇到问题', mail_info)
+                        pushEmail(user_email, 'OoOpS~ 你的ICVE账户登陆遇到问题', mail_info)
                         continue
 
-                    now.info = f'所有序号 {user_info[0]} 用户课程获取完毕，准备开始任务...'
+                    now.info = f'所有序号 {now.id} 用户课程获取完毕，准备开始任务...'
 
                     mail_info = f"""
                                <div style="text-align:center;margin:50px 0">
@@ -195,7 +190,7 @@ if __name__ == '__main__':
                                <p><b>在未来一至两小时内或在收到结果邮件前，最好不要对课件进行相关操作，如查看课件，评论等，这会与程序冲突！</b></p>
                                </div>
                                """
-                    pushEmail(user_info[14], '你的ICVE任务现已开启运行', mail_info)
+                    pushEmail(user_email, '你的ICVE任务现已开启运行', mail_info)
 
                     for course in all_my_course:
                         now.info = f'获取课程 {course["courseName"]} 下所有课件中...'
@@ -219,7 +214,7 @@ if __name__ == '__main__':
                                 time.sleep(2)
 
                             time.sleep(2)
-                            if not user_info[16] or not user_info[15]:
+                            if not user_info['comment_star'] or not user_info['comment_content']:
                                 now.info = '用户选择跳过评论'
                                 continue
 
@@ -235,11 +230,11 @@ if __name__ == '__main__':
                                     break
                             if not is_comment:
                                 my_course.add_comment(cell['id'], course['courseOpenId'], course['openClassId'],
-                                                      user_info[16], user_info[15])
+                                                      user_info['comment_content'], user_info['comment_star'])
                             now.info = f'当前课件 {course["courseName"]} - {cell["name"]}({cell["id"]}) 任务结束'
                             time.sleep(2)
 
-                    now.info = f'序号 {user_info[0]} 的用户任务已全部完成，准备切换至下一位用户'
+                    now.info = f'序号 {now.id} 的用户任务已全部完成，准备切换至下一位用户'
                     mail_info = f"""
                     <div style="text-align:center;margin:50px 0">
                     <p>你的账户 <b>{me.account}</b> 所有任务已经完成！</p>
@@ -251,7 +246,7 @@ if __name__ == '__main__':
                     <p>这并不会影响你多少平时分，如果你发现确实有课件未能达到100%，你可以再次提交，或自行手动完成</p>
                     <p>或者你也可以在此处下载所有文件自助完成相应操作<a href='https://gitee.com/saucer216/icve-helper/tree/main/release/Lite/source'>ICVE-HELPER LITE</a></p>
                     """
-                    pushEmail(user_info[0], '你的ICVE任务已全部完成！', mail_info)
+                    pushEmail(user_email, '你的ICVE任务已全部完成！', mail_info)
 
                 except Exception as e:
                     mail_info = f"""
@@ -279,7 +274,7 @@ if __name__ == '__main__':
                    <p>或者在此处下载所有文件自助完成相应操作<a href='https://gitee.com/saucer216/icve-helper/tree/main/release/Lite/source'>ICVE-HELPER LITE</a></p>
                    </div>
                     """
-                    pushEmail(user_info[14], 'OoOpS~ 你的ICVE任务发生错误！', mail_info)
+                    pushEmail(user_email, 'OoOpS~ 你的ICVE任务发生错误！', mail_info)
                     # 删除该账户
                     delet_one()
             else:
