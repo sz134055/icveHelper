@@ -4,20 +4,56 @@ from web.datebase import insert, delet_one, get_one
 from web.core import User, Course
 from web.email2c import Mail
 from web.config import coon
-#from web.logger import Logger
+# from web.logger import Logger
 from web.core import logger
 import traceback
 
 
+class Current:
+    def __init__(self):
+        self.now_info = ''
+        self.now_id = 0
+        self.now_user = 0
+
+    @property
+    def info(self):
+        return self.now_info
+
+    @info.setter
+    def info(self, value):
+        self.now_info = value
+        logger.info(self.now_info)
+
+    @property
+    def id(self):
+        return self.now_id
+
+    @id.setter
+    def id(self, value):
+        self.now_id = value
+
+    @property
+    def user(self):
+        return self.now_user
+
+    @user.setter
+    def user(self, value):
+        self.now_user = value
+
+
+now = Current()
+'''
 currentId = 0  # 当前用户序号
 currentUserId = 0  # 当前用户ID
 currentInfo = '课程程序未启动'  # 当前状态
-
+'''
 # 以下进度针对单个课件
 currentProcess = 0  # 当前进度
 currentTotalProcess = 0  # 当前总进度
 
 nextUser = True
+
+
 
 
 def pushEmail(recv, title, main_content, to_admin=False):
@@ -39,23 +75,20 @@ def pushEmail(recv, title, main_content, to_admin=False):
 
 
 def fakeTest():
-    global currentId
-    global currentInfo
-    global currentUserId
 
     while True:
         user_info = get_one()
         if user_info:
-            currentId = user_info[0]
-            currentInfo = f'目前用户序号为 {user_info[0]}'
+            now.id = user_info[0]
+            now.info = f'目前用户序号为 {user_info[0]}'
             time.sleep(1)
-            currentInfo = '更新登陆状态'
+            now.info = '更新登陆状态'
             time.sleep(1)
-            currentInfo = '当前任务：ABC123'
+            now.info = '当前任务：ABC123'
             time.sleep(3)
-            currentInfo = '任务完成'
+            now.info = '任务完成'
             time.sleep(1)
-            currentInfo = '准备切换用户'
+            now.info = '准备切换用户'
             time.sleep(1)
         else:
             insert(1, '123', 'TheName', '112233', 'IAMTOKEN', 'JOJO', '2020123456', 'https://www.noexist.com',
@@ -91,12 +124,12 @@ if __name__ == '__main__':
             user_info = get_one()  # 获取表顶部用户信息
             if user_info:
                 # 更新状态
-                currentId = user_info[0]
-                currentUserId = user_info[2]
+                now.id = user_info[0]
+                now.user = user_info[2]
 
-                currentInfo = f'目前用户序号为 {user_info[0]}'
+                now.info = f'目前用户序号为 {user_info[0]}'
 
-                currentInfo = '更新登陆状态'
+                now.info = '更新登陆状态'
                 me = User({
                     'userType': user_info[1],
                     'userId': user_info[2],
@@ -116,7 +149,7 @@ if __name__ == '__main__':
                     login_status = me.login_from_session()
 
                     if login_status['code'] == '0':
-                        currentInfo = f'序号 {user_info[0]} 的用户无法登陆'
+                        now.info = f'序号 {user_info[0]} 的用户无法登陆'
                         # 删除这个无法登陆的用户
                         delet_one()
 
@@ -128,15 +161,15 @@ if __name__ == '__main__':
                         <p>或者在此处下载所有文件自助完成相应操作<a href='https://gitee.com/saucer216/icve-helper/tree/main/release/Lite/source'>ICVE-HELPER LITE</a></p>
                         </div>
                         """
-                        #pushEmail(user_info[14], 'OoOpS~ 你的ICVE账户登陆遇到问题', mail_info)
+                        # pushEmail(user_info[14], 'OoOpS~ 你的ICVE账户登陆遇到问题', mail_info)
                         continue
 
-                    currentInfo = f'序号 {user_info[0]} 用户登陆成功，等待获取所有课程'
+                    now.info = f'序号 {user_info[0]} 用户登陆成功，等待获取所有课程'
                     my_course = Course(me)
-                    currentInfo = f'正在获取序号 {user_info[0]} 用户所有课程'
+                    now.info = f'正在获取序号 {user_info[0]} 用户所有课程'
                     all_my_course = my_course.all_course
                     if not isinstance(all_my_course, list):
-                        currentInfo = f'获取序号 {user_info[0]} 用户课程失败'
+                        now.info = f'获取序号 {user_info[0]} 用户课程失败'
                         delet_one()
 
                         mail_info = f"""
@@ -150,7 +183,7 @@ if __name__ == '__main__':
                         pushEmail(user_info[14], 'OoOpS~ 你的ICVE账户登陆遇到问题', mail_info)
                         continue
 
-                    currentInfo = f'所有序号 {user_info[0]} 用户课程获取完毕，准备开始任务...'
+                    now.info = f'所有序号 {user_info[0]} 用户课程获取完毕，准备开始任务...'
 
                     mail_info = f"""
                                <div style="text-align:center;margin:50px 0">
@@ -165,9 +198,9 @@ if __name__ == '__main__':
                     pushEmail(user_info[14], '你的ICVE任务现已开启运行', mail_info)
 
                     for course in all_my_course:
-                        currentInfo = f'获取课程 {course["courseName"]} 下所有课件中...'
+                        now.info = f'获取课程 {course["courseName"]} 下所有课件中...'
                         all_course_cell = my_course.all_cell(course['courseOpenId'])
-                        currentInfo = '获取成功！初始化任务中...'
+                        now.info = '获取成功！初始化任务中...'
                         # 重置当前课件为第一课件
                         try:
                             my_course.change_corseware(course_id=course['courseOpenId'],
@@ -175,11 +208,11 @@ if __name__ == '__main__':
                                                        cell_name=all_course_cell[0]['name'])
                         except IndexError:
                             # 无课件，跳过
-                            currentInfo = '无课件，跳过...'
+                            now.info = '无课件，跳过...'
                             continue
 
                         for cell in all_course_cell:
-                            currentInfo = f'当前课件 {course["courseName"]} - {cell["name"]}({cell["id"]}) 课件任务开始'
+                            now.info = f'当前课件 {course["courseName"]} - {cell["name"]}({cell["id"]}) 课件任务开始'
                             if cell['process'] != 100:
                                 my_course.finish_cell(course_id=course['courseOpenId'],
                                                       class_id=course['openClassId'], cell_id=cell['id'])
@@ -187,11 +220,12 @@ if __name__ == '__main__':
 
                             time.sleep(2)
                             if not user_info[16] or not user_info[15]:
-                                currentInfo = '用户选择跳过评论'
+                                now.info = '用户选择跳过评论'
                                 continue
 
-                            currentInfo = f'当前课件 {course["courseName"]} - {cell["name"]}({cell["id"]}) 评论任务开始'
-                            comment_info = my_course.all_comment(cell['id'], course['courseOpenId'], course['openClassId'],
+                            now.info = f'当前课件 {course["courseName"]} - {cell["name"]}({cell["id"]}) 评论任务开始'
+                            comment_info = my_course.all_comment(cell['id'], course['courseOpenId'],
+                                                                 course['openClassId'],
                                                                  1)
                             is_comment = False
                             for comment in comment_info:
@@ -202,10 +236,10 @@ if __name__ == '__main__':
                             if not is_comment:
                                 my_course.add_comment(cell['id'], course['courseOpenId'], course['openClassId'],
                                                       user_info[16], user_info[15])
-                            currentInfo = f'当前课件 {course["courseName"]} - {cell["name"]}({cell["id"]}) 任务结束'
+                            now.info = f'当前课件 {course["courseName"]} - {cell["name"]}({cell["id"]}) 任务结束'
                             time.sleep(2)
 
-                    currentInfo = f'序号 {user_info[0]} 的用户任务已全部完成，准备切换至下一位用户'
+                    now.info = f'序号 {user_info[0]} 的用户任务已全部完成，准备切换至下一位用户'
                     mail_info = f"""
                     <div style="text-align:center;margin:50px 0">
                     <p>你的账户 <b>{me.account}</b> 所有任务已经完成！</p>
@@ -228,7 +262,7 @@ if __name__ == '__main__':
                     详细：
                     {traceback.format_exc()}
                     <p>当时任务进度信息：</p>
-                    {currentInfo}
+                    {now.info}
                     </div>
                     """
                     pushEmail('', '出现异常！', mail_info, to_admin=True)
@@ -237,7 +271,7 @@ if __name__ == '__main__':
                     <div style="text-align:center;margin:50px 0">
                    <p>你的账户 <b>{me.account}</b> 任务在运行时发生错误</p>
                    <p>当时任务进度信息:</p>
-                   {currentInfo}
+                   {now.info}
                    <br>
                    <p>此错误已通知管理员</p>
                    <p>为了不阻塞整个队列，现已将你的账户从队列中<b>移除（包括数据库）</b></p>
@@ -249,4 +283,5 @@ if __name__ == '__main__':
                     # 删除该账户
                     delet_one()
             else:
-                currentInfo = '闲置中...'
+                now.info = '闲置中...'
+                time.sleep(3)
