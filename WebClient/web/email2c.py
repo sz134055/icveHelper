@@ -58,7 +58,7 @@ class Mail:
 
             print('SUCCESS')
         except smtplib.SMTPException as e:
-            print('链接错误:' + e)
+            print('链接错误:' + str(e))
 
 
 if __name__ == '__main__':

@@ -13,6 +13,12 @@ def index():
 @login_bp.route('/add',methods=['POST'])
 def add_user():
     try:
+        # 空表单检测
+        for form_value in request.form.to_dict().values():
+            if form_value == '':
+                raise KeyError
+
+
         me = User({
             'appVersion': request.form['app'],
             'clientId': request.form['clientId'],
@@ -55,4 +61,4 @@ def add_user():
         else:
             return jsonify({'code': '0', 'msg': login_status['msg']})
     except KeyError:
-        return jsonify({'code': '0', 'msg': '缺少登陆信息！'})
+        return jsonify({'code': '0', 'msg': '缺少必要登陆信息！'})

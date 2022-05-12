@@ -21,7 +21,7 @@ cur.execute("create table if not exists user ("
             "equipmentApiVersion text,"
             "clientId text,"
             "email text,"
-            "comment_star int,"
+            "comment_star text,"
             "comment_content text"
             ")")
 conn.commit()
@@ -42,8 +42,8 @@ def insert(
         equipmentApiVersion,
         clientId,
         email,
-        star=5,
-        content='非常不错'
+        star='',
+        content=''
 ):
     try:
         cur.execute(

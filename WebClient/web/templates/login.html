@@ -70,70 +70,63 @@
     </div>
     <div class="title_box">
         <p class="main_title">登陆并加入队列</p>
+        <p style="color: gray;font-size: 15px">提交前请务必阅读 为什么需要填写更多 ！</p>
     </div>
     <div class="main_box">
-        <!--
-        <form action="">
-            <label for="account">账号</label>
-            <input type="text" id="account" placeholder="">
-            <label for="pswd">密码</label>
-            <input type="password" id="pswd" placeholder="职教云密码">
-            <label for="app">APP版本</label>
-            <input type="text" id="app" placeholder="职教云APP版本">
-            <label for="os">设备版本</label>
-            <input type="text" id="os" placeholder="模拟登陆设备的版本号，如iOS15.0">
-            <label for="device">设备型号</label>
-            <input type="text" id="device" placeholder="模拟登陆设备的版本号，如iPhone 11">
-            <label for="clientId">ClientId</label>
-            <input type="text" id="clientId" placeholder="模拟登陆设备的UUID，无-间隔">
-        </form>
-        -->
-        <form class="layui-form layui-form-pane" action="" lay-filter="loginForm">
+        <form class="layui-form layui-form-pane" action="" lay-filter="loginForm" id="loginFormBox">
             <div class="layui-form-item">
               <label class="layui-form-label">账号</label>
               <div class="layui-input-block">
-                <input type="text" name="account" lay-verify="title" autocomplete="off" placeholder="职教云账号" class="layui-input">
+                <input type="text" name="account" lay-verify="required|title" autocomplete="off" placeholder="职教云账号" class="layui-input" required>
               </div>
             </div>
             <div class="layui-form-item">
               <label class="layui-form-label">密码</label>
               <div class="layui-input-block">
-                <input type="password" name="pswd" placeholder="职教云密码" autocomplete="off" class="layui-input">
+                <input type="password" name="pswd" placeholder="职教云密码" autocomplete="off" class="layui-input" lay-verify="required|text" required>
               </div>
             </div>
             <div class="layui-form-item">
                 <label class="layui-form-label">APP版本</label>
                 <div class="layui-input-block">
-                  <input type="text" name="app" lay-verify="title" autocomplete="off" placeholder="职教云APP版本" class="layui-input">
+                  <input type="text" name="app" lay-verify="required|title" autocomplete="off" placeholder="职教云APP版本" class="layui-input" required>
                 </div>
               </div>
               <div class="layui-form-item">
                 <label class="layui-form-label">设备版本</label>
                 <div class="layui-input-block">
-                  <input type="text" name="os" lay-verify="title" autocomplete="off" placeholder="模拟登陆设备的版本号，如iOS15.0" class="layui-input">
+                  <input type="text" name="os" lay-verify="required|title" autocomplete="off" placeholder="模拟登陆设备的版本号，如iOS15.0" class="layui-input" required>
                 </div>
               </div>
               <div class="layui-form-item">
                 <label class="layui-form-label">设备型号</label>
                 <div class="layui-input-block">
-                  <input type="text" name="device" lay-verify="title" autocomplete="off" placeholder="模拟登陆设备的版本号，如iPhone 11" class="layui-input">
+                  <input type="text" name="device" lay-verify="required|title" autocomplete="off" placeholder="模拟登陆设备的版本号，如iPhone 11" class="layui-input" required>
                 </div>
               </div>
               <div class="layui-form-item">
                 <label class="layui-form-label">ClientId</label>
                 <div class="layui-input-block">
-                  <input type="text" name="clientId" lay-verify="title" autocomplete="off" placeholder="模拟登陆设备的UUID" class="layui-input">
+                  <input type="text" name="clientId" lay-verify="required|title" autocomplete="off" placeholder="模拟登陆设备的UUID" class="layui-input" required>
                 </div>
               </div>
              <div class="layui-form-item">
                 <label class="layui-form-label">邮箱地址</label>
                 <div class="layui-input-block">
-                  <input type="email" name="email" lay-verify="email" autocomplete="off" placeholder="用于通知你任务进度的邮箱地址" class="layui-input">
+                  <input type="email" name="email" lay-verify="required|email" autocomplete="off" placeholder="用于通知你任务进度的邮箱地址" class="layui-input" required>
                 </div>
               </div>
-
-
             <div class="layui-form-item">
+
+                <label class="layui-form-label">课件评论</label>
+                <div class="layui-input-inline" style="width: 60px">
+                    <input type="checkbox" name="needComment" lay-skin="switch" lay-filter="needCommentSwitch" lay-text="是|否">
+                </div>
+                <div class="layui-form-mid layui-word-aux" style="width: max-content;">启用会自动对课件评论</div>
+            </div>
+
+
+            <div class="layui-form-item" id="btnBox">
               <div class="layui-input-block">
                 <button type="button" class="layui-btn layui-btn-normal" id="LAY-component-form-setval">生成其他信息</button>
                 <button type="button" class="layui-btn layui-btn-normal" id="LAY-component-form-getval">提交</button>
@@ -141,7 +134,7 @@
                 <button type="submit" class="layui-btn" lay-submit="" lay-filter="demo1">立即提交</button>
                 -->
             </div>
-                <div style="text-align: center">
+                <div style="text-align: center;margin: 10px 0">
                     <i class="layui-icon layui-icon-about"></i>
                     <span id="whyNeedMore" style="text-align: center;color: #4183C4;text-decoration: #b4654d;margin-top: 5px;">为什么需要填写更多？</span>
                 </div>
@@ -176,12 +169,43 @@
         </div>
         <div class="question_box">
             <p class="main_title_2">我如何知道我的任务进度？</p>
-            <p>任务开始、中断、结束时，系统都会发送一封电子邮件通知。若需要得知你当前所在队列序号，请自行查询并比对当前任务序号来知晓何时执行你的任务。</p>
+            <p>任务开始、中断、结束时，系统都会发送一封电子邮件通知，因此需要你留下邮箱地址以便通知，推荐QQ邮箱。若需要得知你当前所在队列序号，请自行查询并比对当前任务序号来知晓何时执行你的任务。</p>
+        </div>
+
+        <div class="question_box">
+            <p class="main_title_2">什么是课件评论？</p>
+            <p>程序会自动对比课件下前n页（每页20个评论）中的所有评论，只有当你的账号没有评论记录则会自动评论。目前程序会对比<b>前1页</b>评论。你可以自行判断是否选择关闭课件评论功能。</p>
         </div>
         <!--
         <div class="question_box" style="text-align: center">
             <button type="button" class="layui-btn layui-btn-danger layui-layer-close" style="position: center">我明白了</button>
         </div>
          -->
+    </div>
+    
+    <div class="layui-form-item starSwitch" style="display: none">
+        <label class="layui-form-label">评分</label>
+        <div class="layui-input-block">
+            <select name="star">
+                <option value="5" selected="">5星</option>
+                <option value="4.5">4.5星</option>
+                <option value="4">4星</option>
+                <option value="3.5">3.5星</option>
+                <option value="3">3星</option>
+                <option value="2.5">2.5星</option>
+                <option value="2">2星</option>
+                <option value="1.5">1.5星</option>
+                <option value="1">1星</option>
+                <option value="0.5">0.5星</option>
+            </select>
+        </div>
+    </div>
+    <div class="layui-form-item commentInput" style="display: none;">
+
+        <label class="layui-form-label">评论</label>
+        <div class="layui-input-block">
+            <input type="email" name="comment" lay-verify="required|text" autocomplete="off" placeholder="对课件的简短评论" class="layui-input" required>
+        </div>
+
     </div>
 {% endblock %}

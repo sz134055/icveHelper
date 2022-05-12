@@ -24,6 +24,14 @@ layui.use(['layer', 'form', 'element'], function(){
 
     layui.$('#LAY-component-form-getval').on('click', function(){
         var data = form.val('loginForm');
+
+        for (var prop in data){
+            if (data[prop] === ''){
+                layer.msg('请确认所有项目都填写完毕', {icon: 5});
+                return;
+            }
+        }
+
         layer.load(2);
         login(data);
         //alert(JSON.stringify(data));
@@ -35,7 +43,9 @@ layui.use(['layer', 'form', 'element'], function(){
             'app':'2.8.43',
             'os':'15.0',
             'device':'iPhone 11',
-            'clientId':makeUUID
+            'clientId':makeUUID,
+            'star':'5',
+            'comment':'非常好'
         });
     });
     layui.$('#whyNeedMore').on('click',function () {
@@ -50,6 +60,25 @@ layui.use(['layer', 'form', 'element'], function(){
         });
     });
 
+    form.on('switch(needCommentSwitch)',function () {
+        if (this.checked === false) {
+            document.getElementsByClassName('starSwitch')[0].remove();
+            document.getElementsByClassName('commentInput')[0].remove();
+        }else {
+            var formBox = document.getElementsByTagName('form')[0];
+            var btnBox = document.getElementById('btnBox');
+            var starBox = document.getElementsByClassName('starSwitch')[0].cloneNode(true);
+            var commentBox = document.getElementsByClassName('commentInput')[0].cloneNode(true);
+
+            starBox.removeAttribute('style');
+            commentBox.removeAttribute('style');
+
+            formBox.insertBefore(starBox,btnBox);
+            formBox.insertBefore(commentBox,btnBox);
+
+        }
+        form.render();
+    })
 
     var login = function (loginInfo) {
         layer.closeAll('loading'); //关闭加载层
@@ -74,6 +103,7 @@ layui.use(['layer', 'form', 'element'], function(){
             }
         })
     }
+
 });
 
 window.onload =function () {
