@@ -92,7 +92,7 @@ class User:
         self.user_info.update(login_info)
         # 自动登陆
         self.__ua_switch()
-        self.login()
+        #self.login()
 
     def __ua_switch(self):
         if 'iPhone' or 'iphone' in self.login_info['equipmentModel']:
@@ -212,9 +212,12 @@ class User:
         # 装载Cookie
         self.__s.cookies = utils.cookiejar_from_dict(info, cookiejar=None, overwrite=True)
         # TOKEN保质期测试
-        course = Course(self)
-        course_info = course.all_course
-        if not isinstance(course_info, list):
+        try:
+            course = Course(self)
+            course_info = course.all_course
+            if not isinstance(course_info, list):
+                raise AttributeError
+        except AttributeError:
             # 重新登陆
             self.login_info = self.user_info.copy()
             login_status = self.login()
