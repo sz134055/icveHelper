@@ -1,6 +1,7 @@
 import sqlite3
+from web import get_now_path
 
-conn = sqlite3.connect('icve.db',check_same_thread=False)
+conn = sqlite3.connect(get_now_path()+'/icve.db',check_same_thread=False)
 
 cur = conn.cursor()
 
