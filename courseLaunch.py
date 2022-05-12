@@ -3,8 +3,11 @@ import time
 from web.datebase import insert, delet_one, get_one
 from web.core import User, Course
 from web.email2c import Mail
-from web import coon
-from web import logger
+from web.config import coon
+#from web.logger import Logger
+from web.core import logger
+import traceback
+
 
 currentId = 0  # 当前用户序号
 currentUserId = 0  # 当前用户ID
@@ -60,7 +63,7 @@ def fakeTest():
 
 
 if __name__ == '__main__':
-    if coon.get('debug', 'debug') == 'true':
+    if coon.get('debug', 'fake') == 'true':
         logger.info('FAKE运行模式')
         print('FAKE运行模式')
         fakeTest()
@@ -125,7 +128,7 @@ if __name__ == '__main__':
                         <p>或者在此处下载所有文件自助完成相应操作<a href='https://gitee.com/saucer216/icve-helper/tree/main/release/Lite/source'>ICVE-HELPER LITE</a></p>
                         </div>
                         """
-                        pushEmail(user_info[14], 'OoOpS~ 你的ICVE账户登陆遇到问题', mail_info)
+                        #pushEmail(user_info[14], 'OoOpS~ 你的ICVE账户登陆遇到问题', mail_info)
                         continue
 
                     currentInfo = f'序号 {user_info[0]} 用户登陆成功，等待获取所有课程'
@@ -222,6 +225,8 @@ if __name__ == '__main__':
                     <p>用户 {me.account} 任务失败</p>
                     <p>异常如下：</p>
                     {e}
+                    详细：
+                    {traceback.format_exc()}
                     <p>当时任务进度信息：</p>
                     {currentInfo}
                     </div>
@@ -241,6 +246,7 @@ if __name__ == '__main__':
                    </div>
                     """
                     pushEmail(user_info[14], 'OoOpS~ 你的ICVE任务发生错误！', mail_info)
-
+                    # 删除该账户
+                    delet_one()
             else:
                 currentInfo = '闲置中...'
