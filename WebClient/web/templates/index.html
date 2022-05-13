@@ -14,12 +14,8 @@
         .main_box{
             text-align: center;
             width: 100%;
-            border: #4183C4 1px solid;
-            background-color: rgba(60,196,196,0.3);
-        }
-        .info_box{
-            text-align: center;
-
+        
+            
         }
         .nav_box{
             text-align: center;
@@ -37,6 +33,21 @@
         .nav_box a:active{
             text-shadow: none;
         }
+        .info_box{
+            width: 350px;
+            border: grey 1px solid;
+            border-radius: 5px;
+            text-align: center;
+            margin: 0 auto;
+            height: 400px;
+            background-color: rgba(112, 235, 235, 0.3);
+            
+        }
+        .info_title{
+            font-size: 35px;
+            color: whitesmoke;
+        }
+
     </style>
 
 {% endblock %}
@@ -50,9 +61,7 @@
     </div>
     <div class="main_box">
         <div class="info_box">
-            <h3>当前状态</h3>
-            <p>当前用户：<span id="nowUser">获取中...</span></p>
-            <p id="nowInfo">获取中...</p>
+            <p class="info_title">当前状态</p>
         </div>
     </div>
 
