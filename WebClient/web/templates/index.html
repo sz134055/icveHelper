@@ -8,18 +8,14 @@
             height: 100%;
         }
         body{
-            background: linear-gradient(140deg, #EADEDB 7%, #BC70A4 53%, #BFD641 80%) no-repeat center;
+            background: linear-gradient(140deg, #EADEDB 7%, gray 53%, black 121%) no-repeat center;
             background-size: cover;
         }
         .main_box{
             text-align: center;
             width: 100%;
-            border: #4183C4 1px solid;
-            background-color: rgba(60,196,196,0.3);
-        }
-        .info_box{
-            text-align: center;
-
+        
+            
         }
         .nav_box{
             text-align: center;
@@ -31,11 +27,50 @@
             transition: color 50ms;
         }
         .nav_box a:hover{
-            color: #4183C4;
+            color: whitesmoke;
             text-shadow: 0 0 10px #B5D6FC,0 0 20px #B5D6FC,0 0 30px #B5D6FC,0 0 40px #B5D6FC;
         }
         .nav_box a:active{
             text-shadow: none;
+        }
+        .info_box{
+            width: 350px;
+            border: grey 1px solid;
+            border-radius: 5px;
+            text-align: center;
+            margin: 0 auto;
+            height: 400px;
+            background-color: rgba(245, 245, 245, 0.3);
+            
+        }
+        .info_box p {
+            margin-bottom: 3px;
+        }
+        .info_title{
+            font-size: 35px;
+            color: whitesmoke;
+        }
+        .info_title2{
+            font-size: 20px;
+
+        }
+        .info_title3{
+            font-size: 15px;
+        }
+        .text_spacing{
+            margin: 3px 0;
+        }
+        .now_free_box{
+            padding-top: 40%;
+            text-align: center;
+            padding-left: 10%;
+            padding-right: 10%;
+        }
+        .ajax_info_box{
+            padding-top: 40%;
+            text-align: center;
+            padding-left: 10%;
+            padding-right: 10%;
         }
     </style>
 
@@ -50,10 +85,27 @@
     </div>
     <div class="main_box">
         <div class="info_box">
-            <h3>当前状态</h3>
-            <p>当前用户：<span id="nowUser">获取中...</span></p>
-            <p id="nowInfo">获取中...</p>
+            <p class="info_title">当前状态</p>
         </div>
+
     </div>
 
+
+{% endblock %}
+{% block outBody %}
+    <div class="user_info" style="display: none">
+        <p class="info_title2">正在执行用户任务</p>
+        <img src="" alt="" style="border-radius: 50%">
+        <p class="text_spacing">序号: <span style="color: blueviolet" class="user_num"></span></p>
+        <p id='' class="info_title3 text_spacing">账户ID：<span class="user_id"></span></p>
+        <p class="info_title3 text_spacing">运行状态功能暂不可用</p>
+    </div>
+    <div class="now_free_box" style="display: none">
+        <p class="info_title2">闲置或脚本不在运行</p>
+        <p>你可以登陆并加入队列，脚本会从闲置状态转变为执行你的任务</p>
+    </div>
+    <div class="ajax_info_box" style="display: none">
+        <p class="info_title2 ajax_info_msg">正在获取...</p>
+        <p class="ajax_info_tips">请稍作等待</p>
+    </div>
 {% endblock %}

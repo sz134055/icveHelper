@@ -14,11 +14,32 @@
         <link rel="stylesheet" href="{{ url_for('static',filename='css/font.css') }}">
         <link rel="stylesheet" href="{{ url_for('static',filename='css/base.css') }}">
     {% endblock %}
+    <style>
+        .base_header{
+            width: 100%;
+            height: max-content;
+            text-align: center;
+
+            border-bottom: gray 1px solid;
+        }
+        .base_header p {
+            color: orange;
+            font-weight: bolder;
+            font-size: 50px;
+        }
+    </style>
 </head>
 <body>
+    <div class="base_header">
+        <p>ICVE-HELPER</p>
+        <span style="color: red;">当前为ALPHA阶段，随时都可能维护从而无法访问</span>
+    </div>
     {% block content %}
         CONTENT HERE
     {% endblock %}
+    <div style="text-align: center;">
+        <a href="https://beian.miit.gov.cn/">皖ICP备2021015154号</a>
+    </div>
 </body>
     {% block outBody %}
     {% endblock %}
