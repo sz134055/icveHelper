@@ -21,7 +21,7 @@ console = Console()
 
 
 # set_console(console)
-
+'''
 def check_update(now_version, now_build):
     res = requests.get(url='https://hyasea.top:7002/icve/version', verify=False)
     if res.status_code == 200:
@@ -41,7 +41,7 @@ def broadcast():
         console.print('[广播]')
         console.print(res_json['time'])
         console.print(res_json['content'], style=res_json['style'])
-
+'''
 
 # 检查更新
 # check_update(version, build)
@@ -164,6 +164,7 @@ def all_cell(user, course_id, class_id=None):
     return cell_list
 
 
+
 # 主循环
 try:
     while True:
@@ -222,6 +223,8 @@ try:
         elif coon.get('user', 'show_pswd') != 'false':
             console.print('展示密码已被关闭，如若启动请在setting文件中将 user --- show_pswd 选项设置为 true')
         '''
+
+        # 详细登陆表单展示
         console.print('完整登陆选项如下：')
         login_info_table = Table(show_header=True, header_style="bold magenta")
         login_info_table.add_column("登陆项", justify='center')
@@ -280,6 +283,7 @@ try:
             )
 
         console.print(login_info_table)
+        # 详细登陆表单展示
 
         if console.input('确认没有问题后回车开始登陆，[red]输入任意值重新输入[/red]'):
             continue
@@ -301,8 +305,10 @@ try:
         except KeyError:
             console.input('登陆失败！按任意键重试')
             continue
-        else:
-            console.print('登陆成功！', style='green')
+        
+        console.print('登陆成功！', style='green')
+
+        while True:
             course_list = all_my_course(user=me)
 
             course_choose = ''
@@ -477,6 +483,8 @@ try:
                 else:
                     console.print('重新选择课程')
                     continue
+except TypeError:
+    logger.error('\n' + traceback_exc()+'\n发生错误，可能为被检测，准备重新启动程序。')
 except:
 
     logger.error('\n' + traceback_exc())
