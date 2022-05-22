@@ -1,9 +1,0 @@
-{
-  "version": "0.3.1-Alpha",
-  "build": "20211224.0",
-  "fix": [
-    ["lite","setting.ini"],
-    ["launch.py"]
-  ],
-  "content": "修复选课功能BUG；对无课件课程适配防止意外退出；优化广播和更新提示显示"
-}
