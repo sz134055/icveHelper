@@ -5,3 +5,5 @@ venv
 *.pyc
 *.log
 .DS_Store
+LiteClient/build
+*.spec
