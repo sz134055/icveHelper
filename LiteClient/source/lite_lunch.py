@@ -466,9 +466,7 @@ while True:
                             except IndexError:
                                 # 列表已被清空
                                 course_choose_id = None
-                            finally:
-                                continue
-
+                            
                     elif command == '2':
                         cell_list = all_cell(me, course_choose_info['courseOpenId'], course_choose_info['openClassId'])
                         console.input('[red]->[/red]输入任意字符或回车继续')
