@@ -1,3 +1,4 @@
+# 暂停更新，最新以lite/core为准
 import uuid
 from functools import wraps
 import requests

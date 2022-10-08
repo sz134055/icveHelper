@@ -26,7 +26,7 @@ requests
 ```
 安装完毕后即可通过`python lite_launch.py`启动
 
-如果需要打包，还需要安装`pyinstaller`，随后便可使用以下指令打包生成：
+如果需要打包，还需要安装`pyinstaller`，随后便可使用以下指令打包生成（推荐管理员模式）：
 ```shell
 pyinstaller -F lite_launch.py -n ICVE-HELPER
 ```

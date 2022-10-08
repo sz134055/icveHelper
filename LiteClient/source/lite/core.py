@@ -1,4 +1,4 @@
-from random import uniform,randint
+from random import uniform, randint
 import requests
 from requests import utils
 import time
@@ -277,6 +277,7 @@ class User:
 
         return self.__s
 
+
 class Course:
     def __init__(self, user):
         self.user = user
@@ -291,16 +292,17 @@ class Course:
             'stuId': self.user.id,
             'newToken': self.user.token
         }
-        self.progress = None    # RICH 进程
+        self.progress = None  # RICH 进程
         self.progress_task = None
 
     # 用于设置RICH进程
-    def set_progress(self,progress):
+    def set_progress(self, progress):
         self.progress = progress
 
     # 用于添加RICH进程任务
-    def set_progress_task(self,task):
+    def set_progress_task(self, task):
         self.progress_task = task
+
     '''
     # 用于添加RICH进程任务
     def add_progress_task(self,centent,**kwargs):
@@ -310,6 +312,7 @@ class Course:
     def update_progress(self,task,**kwargs):
         return self.progress.update(task,kwargs)
     '''
+
     def get_req(self, api, params):
         res = self.__s.get(url=apis[api], params=params)
         return res
@@ -434,8 +437,18 @@ class Course:
         })
 
         c_list = self.courseware(api=apis['all_cell'], params=pay_laod)
-        return [{'name': c['cellName'], 'id': c['cellId'], 'type': c['categoryName'], 'process': c['studyCellPercent']}
-                for c in c_list]
+        # 针对 子节点 类型更新
+        cell_list = []
+        for c in c_list:
+            if c['categoryName'] == '子节点':
+                c_list.extend(c['cellChildNodeList'])
+                continue
+            cell_list.append({'name': c['cellName'], 'id': c['cellId'], 'type': c['categoryName'], 'process': c['studyCellPercent']})
+
+        #cell_list = [{'name': c['cellName'], 'id': c['cellId'], 'type': c['categoryName'], 'process': c['studyCellPercent']} for c in c_list]
+
+        return cell_list
+
 
     # 弃用
     def get_cell_info(self, class_id, cell_id):
@@ -461,6 +474,9 @@ class Course:
             logger.warning(f'无法获取到课件{cell_id}的信息')
 
     def change_corseware(self, course_id, class_id, cell_id, cell_name):
+        '''
+        用于重置当前学习课件，避免因为上次学习记录影响课件完成方法
+        '''
         # 重置INFO_GET
         headers = the_headers.copy()
         headers.update({
@@ -559,17 +575,18 @@ class Course:
                     'dtype': '1',
                 }
 
-
                 if '频' in cell_info['type']:
                     # 视频、音频类型
-                    #task_cell = self.progress.add_task(f'[red]{cell_info["name"]}', total=int(cell_info['long']))
-                    self.progress.update(task_cell,completed=0,description=f'[yellow]{cell_info["name"]}({cell_info["type"]})',refresh=True)
+                    # task_cell = self.progress.add_task(f'[red]{cell_info["name"]}', total=int(cell_info['long']))
+                    self.progress.update(task_cell, completed=0,
+                                         description=f'[yellow]{cell_info["name"]}({cell_info["type"]})', refresh=True)
+
                     def get_next_long(num, long):
                         if num == long:
                             # 防止卡循环
                             return long + 1
                         else:
-                            new_num = num + uniform(18,19.5)
+                            new_num = num + uniform(18, 19.5)
                             if (new_num) < long:
                                 if new_num - num > 20:
                                     return new_num - 1
@@ -592,9 +609,12 @@ class Course:
 
                         res_json = res.json()
                         if res_json['code'] == 1:
-                            logger.info(f'成功为课件 {cell_info["name"]}({cell_id}) 添加时长至 {num} ，总时长 {long} (注意此时长非真正意义上视频时长)')
+                            logger.info(
+                                f'成功为课件 {cell_info["name"]}({cell_id}) 添加时长至 {num} ，总时长 {long} (注意此时长非真正意义上视频时长)')
 
-                            self.progress.update(task_cell,completed=num/long,description=f'[yellow]{cell_info["name"]}({cell_info["type"]})',refresh=True)
+                            self.progress.update(task_cell, completed=num / long,
+                                                 description=f'[yellow]{cell_info["name"]}({cell_info["type"]})',
+                                                 refresh=True)
 
                             # 随机等待时长
                             wait = randint(5, 10)
@@ -605,17 +625,22 @@ class Course:
                             continue
                         elif res_json['code'] == -2:
                             num = num - 0.00123
-                            time.sleep(randint(2,4))
+                            time.sleep(randint(2, 4))
                             continue
                         else:
+                            logger.warning(f'返回信息：[{res.status_code}]：\n{res.content}')
                             logger.warning(f'为课件 {cell_info["name"]}({cell_id}) 添加时长失败：{res_json["msg"]}')
+
                             break
-                    self.progress.update(task_cell,completed=1,description=f'[green]{cell_info["name"]}(完成课件)',refresh=True)
+                    self.progress.update(task_cell, completed=1, description=f'[green]{cell_info["name"]}(完成课件)',
+                                         refresh=True)
                     logger.info(f'已为课件 {cell_info["name"]}({cell_id}) 添加时长至{num}秒，目标时长{long}秒')
                 else:
                     # 文档类型
-                    #task_cell = self.progress.add_task(f'[red]{cell_info["name"]}', total=int(cell_info['page']))
-                    self.progress.update(task_cell,completed=0,description=f'[yellow]{cell_info["name"]}({cell_info["type"]})',refresh=True)
+                    # task_cell = self.progress.add_task(f'[red]{cell_info["name"]}', total=int(cell_info['page']))
+                    self.progress.update(task_cell, completed=0,
+                                         description=f'[yellow]{cell_info["name"]}({cell_info["type"]})', refresh=True)
+
                     def get_next_page(now, page):
                         if now == page:
                             return page + 1
@@ -644,7 +669,9 @@ class Course:
                         res_json = res.json()
                         if res_json['code'] == 1:
                             logger.info(f'成功为课件 {cell_info["name"]}({cell_id}) 添加页数至 {now_page} ，总页数 {page_long}')
-                            self.progress.update(task_cell,completed=now_page/page_long,description=f'[yellow]{cell_info["name"]}({cell_info["type"]})',refresh=True)
+                            self.progress.update(task_cell, completed=now_page / page_long,
+                                                 description=f'[yellow]{cell_info["name"]}({cell_info["type"]})',
+                                                 refresh=True)
 
                             # 随机等待时长
                             wait = randint(5, 10)
@@ -656,11 +683,13 @@ class Course:
                         else:
                             logger.warning(f'为课件 {cell_info["name"]}({cell_id}) 添加页数失败：{res_json["msg"]}')
                             break
-                    self.progress.update(task_cell, completed=1,description=f'[green]{cell_info["name"]}(完成课件)', refresh=True)
+                    self.progress.update(task_cell, completed=1, description=f'[green]{cell_info["name"]}(完成课件)',
+                                         refresh=True)
 
                     logger.info(f'已为课件 {cell_info["name"]}({cell_id}) 添加页数至 {now_page} ，目标页数 {page_long}')
         else:
-            self.progress.update(task_cell, completed=0, description=f'[red]{cell_info["name"]}(失败，建议重新登陆再试)', refresh=True)
+            self.progress.update(task_cell, completed=0, description=f'[red]{cell_info["name"]}(失败，建议重新登陆再试)',
+                                 refresh=True)
 
     def all_cell(self, course_id=None, course_name=None, class_id=None) -> list:
         """
@@ -750,7 +779,8 @@ class Course:
                 if res_json['code'] == 1:
                     c_list = res_json['list']
                     comment_list += [
-                        {'user_id': c['userId'], 'user_name': c['displayName'], 'content': c['content'], 'star': c['star']}
+                        {'user_id': c['userId'], 'user_name': c['displayName'], 'content': c['content'],
+                         'star': c['star']}
                         for c in c_list]
                     if len(c_list) < 20:
                         pay_load['page'] = str(int(pay_load['page']) + 1)
