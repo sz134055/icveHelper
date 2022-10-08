@@ -3,6 +3,7 @@ import requests
 from requests import utils
 import time
 import hashlib
+from json.decoder import JSONDecodeError
 
 from . import logger
 from sys import _getframe
@@ -607,7 +608,13 @@ class Course:
                         form_load['studyNewlyTime'] = num
                         res = self.__s.post(url=apis['finish_cell'], data=form_load, headers=headers)
 
-                        res_json = res.json()
+                        res_json = {}
+                        try:
+                            res_json = res.json()
+                        except requests.exceptions.JSONDecodeError or JSONDecodeError:
+                            logger.warning(f'课件{cell_info["name"]}({cell_id})意外返回：\n{res.content}')
+                            raise Exception(f'课件{cell_info["name"]}({cell_id})意外返回：\n{res.content}\n')
+
                         if res_json['code'] == 1:
                             logger.info(
                                 f'成功为课件 {cell_info["name"]}({cell_id}) 添加时长至 {num} ，总时长 {long} (注意此时长非真正意义上视频时长)')

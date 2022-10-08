@@ -9,7 +9,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeEl
 from uuid import uuid4
 
 # 适用于打包的的新版本
-version = '0.5.3'
+version = '0.5.4'
 build = '20221008'
 
 # 全局Console
