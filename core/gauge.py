@@ -1,4 +1,5 @@
 from logging import Logger
+from uuid import uuid4
 
 
 class GaugeBaseException(Exception):
@@ -29,6 +30,11 @@ class GaugeOverflow(GaugeBaseException):
         return f'进度{self.name}不允许溢出'
 
 
+class GaugeChildNotExisted(GaugeExisted):
+    def __str__(self):
+        return f'不存在名为{self.name}的子进度集合'
+
+
 class Gauge:
     """
     用于辅助处理进度问题
@@ -37,20 +43,44 @@ class Gauge:
     """
 
     def __init__(self):
+        # 进度集合
         self.__gauge_list = {}
+        # 子进度对象列表
+        self.__childList = {}
+        # 别名
+        self.__name = self.__random_name()
+
+    def __random_name(self):
+        return str(uuid4()).replace('-', '')
+
+    @property
+    def name(self):
+        """
+        获取或修改进度对象的别名
+
+        :return: 当前进度对象的别名
+        """
+        return self.__name
+
+    @name.setter
+    def name(self, name):
+        self.__name = name
 
     def register(self, name: str, total: int | float, initial: int | float = 0, step: int | float = 0,
                  overflow: bool = False,
                  update: bool = False) -> None:
         """
         注册一个进度
+
         :param name: 进度名
         :param total: 总进度数值，即进度100%时进度的数值
         :param initial: 初始进度，默认为0
         :param step: 步进值，默认为0
         :param overflow: 是否允许进度溢出，即当前进度大于总进度，默认为不允许
         :param update: 更新模式，启用后如已存在进度，则覆盖此进度，如不存在则创建。默认不启用
+
         :return: 无返回
+
         :raise GaugeExisted: 重名错误
         :raise GaugeValueError: 进度值错误
         :raise GaugeOverflow: 进度值溢出错误
@@ -65,11 +95,14 @@ class Gauge:
         else:
             self.__gauge_list[name] = {'total': total, 'now': initial, 'step': step, 'overflow': overflow}
 
-    def get(self, name) -> int | float:
+    def get(self, name: str) -> int | float:
         """
         获取一个进度当前的进度
+
         :param name: 进度名
+
         :return: 当前进度
+
         :raise GaugeNotExisted: 查无进度错误
         """
         try:
@@ -80,9 +113,12 @@ class Gauge:
     def update(self, name, now: int | float) -> None:
         """
         更新一个进度的当前进度
+
         :param name: 进度名
         :param now: 进度值
+
         :return: 无返回
+
         :raise GaugeValueError: 进度值错误
         :raise GaugeOverflow: 进度值溢出错误
         :raise GaugeNotExisted: 查无进度错误
@@ -106,7 +142,9 @@ class Gauge:
 
         :param name: 进度名
         :param val: 步进值，默认为设置时的步进值
+
         :return: 返回步进后的当前进度值
+
         :raise GaugeNotExisted: 查无进度错误
         """
         try:
@@ -131,11 +169,68 @@ class Gauge:
     def del_gauge(self, name) -> None:
         """
         删除一个进度
+
         :param name: 进度名
+
         :return: 无返回
+
         :raise GaugeNotExisted: 查无进度错误
         """
         try:
             del self.__gauge_list[name]
         except KeyError:
             raise GaugeNotExisted(name)
+
+    def clearUp(self) -> None:
+        """
+        清空进度列表
+
+        :return: 无返回
+        """
+        self.__gauge_list.clear()
+
+    def child_bind(self, target_addr, name: str=None) -> None:
+        """
+        绑定一个子进度对象
+
+        :param target_addr: 子进度对象地址
+        :param name: 子进度对象别名，如果此参数不为空则以此参数为准
+
+        :return: 无返回
+        """
+        if not name:
+            name = target_addr.name
+        self.__childList.update({name: target_addr})
+
+    def get_child(self, name: str) -> None:
+        """
+        获取子进度对象
+
+        :param name: 子进度对象别名
+
+        :return: 无返回
+
+        :raise GaugeChildNotExisted: 查无子进度对象错误
+        """
+        try:
+            return self.__childList[name]
+        except KeyError:
+            raise GaugeChildNotExisted(name)
+
+
+class GaugeChild(Gauge):
+    def __init__(self):
+        super().__init__()
+
+    def parent(self, target: Gauge, name: str = None) -> None:
+        """
+        绑定到父进度集合对象
+
+        :param target: 父进度对象
+        :param name: 子进度对象别名，如果此参数不为空则以此参数为准
+
+        :return: 无返回
+        """
+        target.child_bind(self, name)
+
+
