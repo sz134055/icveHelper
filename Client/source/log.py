@@ -16,7 +16,7 @@ def get_logger():
 
     file_name = strftime('%Y-%m-%d_%H-%M-%S', localtime())
     log_file_path = join(work_path, 'logs', file_name + '.log')
-    file_log = logging.FileHandler(filename=log_file_path)
+    file_log = logging.FileHandler(filename=log_file_path,encoding='utf-8')
     # file_log.setFormatter(__format_switch(debug_status=coon.get('logging', 'debug')))
     file_log.setFormatter(logging.Formatter('%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s'))
     file_log.setLevel(logging.DEBUG)
