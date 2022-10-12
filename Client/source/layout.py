@@ -135,12 +135,12 @@ class main ( wx.Frame ):
 
         func_layout = wx.BoxSizer( wx.VERTICAL )
 
-        self.func_tips_1 = wx.StaticText( self, wx.ID_ANY, u"选择课程以显示课件", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.func_tips_1 = wx.StaticText( self, wx.ID_ANY, u"等待登录", wx.DefaultPosition, wx.DefaultSize, 0 )
         self.func_tips_1.Wrap( -1 )
 
         self.func_tips_1.SetForegroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_CAPTIONTEXT ) )
 
-        func_layout.Add( self.func_tips_1, 0, wx.ALL, 5 )
+        func_layout.Add( self.func_tips_1, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL, 5 )
 
         self.func_tips_2 = wx.StaticText( self, wx.ID_ANY, u">>>", wx.Point( -1,-1 ), wx.DefaultSize, 0 )
         self.func_tips_2.Wrap( -1 )
@@ -237,6 +237,7 @@ class main ( wx.Frame ):
         self.login_btn.Bind( wx.EVT_BUTTON, self.login )
         self.login_params_btn.Bind( wx.EVT_BUTTON, self.login_params )
         self.help_btn.Bind( wx.EVT_BUTTON, self.help )
+        self.course_list.Bind( wx.EVT_LISTBOX, self.get_cell_list )
         self.flash_course_btn.Bind( wx.EVT_BUTTON, self.flash_course_list )
         self.func_start_btn.Bind( wx.EVT_BUTTON, self.finish_course )
 
@@ -252,6 +253,9 @@ class main ( wx.Frame ):
         event.Skip()
 
     def help( self, event ):
+        event.Skip()
+
+    def get_cell_list( self, event ):
         event.Skip()
 
     def flash_course_list( self, event ):
