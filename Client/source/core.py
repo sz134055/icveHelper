@@ -174,7 +174,9 @@ class User:
             res_json = res.json()
         except Exception:
             logger.warning(f'登录失败！\n{res.text}')
-            return {'code': '0', 'msg': res_json['msg']}
+            # 手动设置
+            res_json = {'code':0,'msg':'服务器拒绝服务，请查阅日志'}
+            # return {'code': '0', 'msg': res_json['msg']}
 
         if res_json['code'] == 1:
             # 登陆成功
@@ -342,8 +344,8 @@ class Course:
             'isPass': '0',
             'page': '1',
         })
-        course_list = []
-
+        # course_list = []
+        course_list = {'code': '1', 'data': []}
         while True:
             res = self.__s.get(url=apis['all_course'], params=pay_laod)
 
@@ -354,7 +356,7 @@ class Course:
                     break
                 else:
                     for c in c_list:
-                        course_list.append({
+                        course_list['data'].append({
                             'courseOpenId': c['courseOpenId'],
                             'courseName': c['courseName'],
                             'url': c['thumbnail'],
@@ -454,12 +456,12 @@ class Course:
             if c['categoryName'] == '子节点':
                 c_list.extend(c['cellChildNodeList'])
                 continue
-            cell_list.append({'name': c['cellName'], 'id': c['cellId'], 'type': c['categoryName'], 'process': c['studyCellPercent']})
+            cell_list.append(
+                {'name': c['cellName'], 'id': c['cellId'], 'type': c['categoryName'], 'process': c['studyCellPercent']})
 
-        #cell_list = [{'name': c['cellName'], 'id': c['cellId'], 'type': c['categoryName'], 'process': c['studyCellPercent']} for c in c_list]
+        # cell_list = [{'name': c['cellName'], 'id': c['cellId'], 'type': c['categoryName'], 'process': c['studyCellPercent']} for c in c_list]
 
         return cell_list
-
 
     # 弃用
     def get_cell_info(self, class_id, cell_id):
@@ -711,8 +713,11 @@ class Course:
     def all_cell(self, course_id=None, course_name=None, class_id=None) -> list:
         """
         自动获取某一课程下所有课件列表，两个参数至少要有一项
+
         :param course_id: （可选）课程ID，当两参数都有时以此为准
         :param course_name: （可选）课程名，会自动根据此来匹配课程名，可能会导致误差
+        :param class_id: （可选）开课班级ID
+
         :return: list 包含课件名称和ID的列表
         """
         # class_id = ''
@@ -749,10 +754,12 @@ class Course:
     def all_comment(self, cell_id, course_id, class_id, limit=1) -> list:
         """
         获取某一课件下的所有评论
+
         :param cell_id: 课件ID
         :param course_id: 课程ID
         :param class_id: 班级ID
         :param limit: int 限制，用于获取前 limit 页的所有评论，一页包含20个评论
+
         :return: 包含评论者信息的评论列表
         """
 
@@ -814,12 +821,14 @@ class Course:
     def add_comment(self, cell_id, course_id, class_id, content, star):
         """
         为某一课件添加评论
+
         :param cell_id: 课件ID
         :param course_id: 课程ID
         :param class_id: 班级ID
         :param content: 评论内容
         :param star: 评论打分星级，区间[0,5]
-        :return:
+
+        :return: None
         """
         data_load = {
             "CellId": "{}".format(cell_id),
