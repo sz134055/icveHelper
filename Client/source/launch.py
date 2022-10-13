@@ -10,6 +10,9 @@ import time
 from json.decoder import JSONDecodeError
 import requests
 
+# 版本信息
+version = '0.1.0-Alpha'
+
 # 线程池
 threads = ThreadPoolExecutor(max_workers=10)
 
@@ -419,11 +422,17 @@ class MainLayout(Layout):
     def __init__(self, parent):
         super().__init__(parent)
 
+        # 标题
+        self.version_info()
+
         # 初始禁用
         self.flash_course_btn.Disable()
         self.func_start_btn.Disable()
         self.course_list.Disable()
         self.cell_list.Disable()
+
+    def version_info(self):
+        self.SetTitle(f'ICVE-HELPER [{version}]')
 
     def _login_dlg(self, title, content):
         dlg = wx.MessageDialog(None, u'{}'.format(content), u'{}'.format(title), wx.YES_DEFAULT | wx.ICON_QUESTION)
@@ -490,7 +499,7 @@ class MainLayout(Layout):
 
         threads.submit(finish_all_courses, self, self.course_list.GetSelection())
 
-
-app = wx.App()
-MainLayout(None).Show()
-app.MainLoop()
+if __name__ == '__main__':
+    app = wx.App()
+    MainLayout(None).Show()
+    app.MainLoop()
