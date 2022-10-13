@@ -76,8 +76,6 @@ class CourseForClient(Course):
                 # 更新当前进度
                 # self.now_cell['now'] = 1
                 wx.CallAfter(self._target.cell_gauge.SetRange, 1)
-                # 让进度条具有过度动画
-                gauge_update(0)
                 gauge_update(1)
 
                 logger.info(f'课件 {cell_info["name"]}({cell_info["id"]}) 已达到100%完成度，将不会进行添加时长或页数操作')
@@ -180,7 +178,7 @@ class CourseForClient(Course):
                             break
                     # self.progress.update(task_cell, completed=1, description=f'[green]{cell_info["name"]}(完成课件)',refresh=True)
                     # 完成课件，使其进度到达100
-                    # self.now_cell['now'] = self.now_cell['total']
+                    gauge_update(self._target.cell_gauge.GetRange())
                     logger.info(f'已为课件 {cell_info["name"]}({cell_id}) 添加时长至{num}秒，目标时长{long}秒')
                 else:
                     # 文档类型
@@ -242,6 +240,9 @@ class CourseForClient(Course):
 
                             break
                     # self.progress.update(task_cell, completed=1, description=f'[green]{cell_info["name"]}(完成课件)',refresh=True)
+
+                    # 完成课件，使其进度到达100
+                    gauge_update(self._target.cell_gauge.GetRange())
 
                     logger.info(f'已为课件 {cell_info["name"]}({cell_id}) 添加页数至 {now_page} ，目标页数 {page_long}')
         else:
@@ -405,18 +406,23 @@ def finish_all_courses(target, course_index: int):
 
         course.finish_cell(now_course_id, now_class_id, courses_info['now_cell']['id'])
         # 重置课件进度
-        wx.CallAfter(target.cell_gauge.SetValue, 0)
+        # wx.CallAfter(target.cell_gauge.SetValue, 0)
         # 更新总进度
         wx.CallAfter(target.total_gauge.SetValue, target.total_gauge.GetValue() + 1)
         wx.CallAfter(target.total_gague_persentage.SetLabel,
                      f'{(target.total_gauge.GetValue() / target.total_gauge.GetRange()) * 100:.2f}%')
 
-    # 将now_cell清空，使状态检测结束
-    # courses_info['now_cell'].clear()
+    # 让进度到100%
+    wx.CallAfter(target.total_gauge.SetValue,target.total_gauge.GetRange())
     wx.CallAfter(target._login_dlg, '任务结束', '已完成所有课件！')
     # 刷新列表
     get_all_cells(target, course_index)
-
+    # 解禁列表
+    wx.CallAfter(target.course_list.Enable)
+    wx.CallAfter(target.cell_list.Enable)
+    # 解禁按钮
+    wx.CallAfter(target.flash_course_btn.Enable)
+    wx.CallAfter(target.func_start_btn.Enable)
 
 class MainLayout(Layout):
     def __init__(self, parent):
