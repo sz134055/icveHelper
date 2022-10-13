@@ -17,7 +17,7 @@ import wx.xrc
 class main ( wx.Frame ):
 
     def __init__( self, parent ):
-        wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"登录至ICVE", pos = wx.DefaultPosition, size = wx.Size( 706,497 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
+        wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"登录至ICVE", pos = wx.DefaultPosition, size = wx.Size( 706,524 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
 
         self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
         self.SetForegroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_WINDOW ) )
@@ -173,6 +173,16 @@ class main ( wx.Frame ):
 
 
         main_layout.Add( list_layout, 1, wx.EXPAND, 5 )
+
+        running_tips_layout = wx.BoxSizer( wx.VERTICAL )
+
+        self.running_tips = wx.StaticText( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.running_tips.Wrap( -1 )
+
+        running_tips_layout.Add( self.running_tips, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL, 5 )
+
+
+        main_layout.Add( running_tips_layout, 1, wx.EXPAND, 5 )
 
         gauge_layout = wx.BoxSizer( wx.VERTICAL )
 
