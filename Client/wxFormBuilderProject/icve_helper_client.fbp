@@ -47,7 +47,7 @@
             <property name="minimum_size"></property>
             <property name="name">main</property>
             <property name="pos"></property>
-            <property name="size">706,524</property>
+            <property name="size">776,535</property>
             <property name="style">wxDEFAULT_FRAME_STYLE</property>
             <property name="subclass">; ; forward_declare</property>
             <property name="title">登录至ICVE</property>
@@ -1342,7 +1342,7 @@
                                 <property name="dock_fixed">0</property>
                                 <property name="docking">Left</property>
                                 <property name="enabled">1</property>
-                                <property name="fg"></property>
+                                <property name="fg">wxSYS_COLOUR_CAPTIONTEXT</property>
                                 <property name="floatable">1</property>
                                 <property name="font"></property>
                                 <property name="gripper">0</property>
