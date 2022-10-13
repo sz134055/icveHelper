@@ -318,6 +318,13 @@ class Course:
         self.progress = None  # RICH 进程
         self.progress_task = None
 
+        # 临时用于更新当前课件更新进度
+        self.now_cell = {
+            'now':0,
+            'total':0
+        }
+
+    '''
     # 用于设置RICH进程
     def set_progress(self, progress):
         self.progress = progress
@@ -325,6 +332,8 @@ class Course:
     # 用于添加RICH进程任务
     def set_progress_task(self, task):
         self.progress_task = task
+
+    '''
 
     '''
     # 用于添加RICH进程任务
@@ -459,7 +468,7 @@ class Course:
 
         :param course_id: 课程ID
         :param topic_id: 章节ID
-        :param class_id: (可选) 开课班级ID
+        :param class_id: (可选) 开课班级ID。但是当此参数为空时，将无法获取课件学习进度
 
         :return: list 包含课件名称和ID的列表
         """
@@ -582,9 +591,14 @@ class Course:
         cell_info = self.cell_info(course_id, class_id, cell_id)
 
         # 解决异常学习导致无法获取课件信息问题
-        task_cell = self.progress_task
+        # task_cell = self.progress_task
+
+        self.now_cell['total'] = 1
         if cell_info:
             if int(cell_info['process']) == 100:
+                # 更新当前进度
+                self.now_cell['now'] = 1
+
                 logger.info(f'课件 {cell_info["name"]}({cell_info["id"]}) 已达到100%完成度，将不会进行添加时长或页数操作')
             else:
                 headers = {
@@ -612,8 +626,12 @@ class Course:
                 if '频' in cell_info['type']:
                     # 视频、音频类型
                     # task_cell = self.progress.add_task(f'[red]{cell_info["name"]}', total=int(cell_info['long']))
-                    self.progress.update(task_cell, completed=0,
-                                         description=f'[yellow]{cell_info["name"]}({cell_info["type"]})', refresh=True)
+
+                    # self.progress.update(task_cell, completed=0,description=f'[yellow]{cell_info["name"]}({cell_info["type"]})', refresh=True)
+
+                    # 更新进度
+                    self.now_cell['total'] = cell_info['long']
+                    self.now_cell['now'] = cell_info['long']
 
                     def get_next_long(num, long):
                         if num == long:
@@ -649,12 +667,10 @@ class Course:
                             raise Exception(f'课件{cell_info["name"]}({cell_id})意外返回：\n{res.content}\n')
 
                         if res_json['code'] == 1:
-                            logger.info(
-                                f'成功为课件 {cell_info["name"]}({cell_id}) 添加时长至 {num} ，总时长 {long} (注意此时长非真正意义上视频时长)')
+                            logger.info(f'成功为课件 {cell_info["name"]}({cell_id}) 添加时长至 {num} ，总时长 {long} (注意此时长非真正意义上视频时长)')
 
-                            self.progress.update(task_cell, completed=num / long,
-                                                 description=f'[yellow]{cell_info["name"]}({cell_info["type"]})',
-                                                 refresh=True)
+                            # self.progress.update(task_cell, completed=num / long, description=f'[yellow]{cell_info["name"]}({cell_info["type"]})',refresh=True)
+                            self.now_cell['now'] = num
 
                             # 随机等待时长
                             wait = randint(5, 10)
@@ -672,14 +688,14 @@ class Course:
                             logger.warning(f'为课件 {cell_info["name"]}({cell_id}) 添加时长失败：{res_json["msg"]}')
 
                             break
-                    self.progress.update(task_cell, completed=1, description=f'[green]{cell_info["name"]}(完成课件)',
-                                         refresh=True)
+                    # self.progress.update(task_cell, completed=1, description=f'[green]{cell_info["name"]}(完成课件)',refresh=True)
+                    # 完成课件，使其进度到达100
+                    # self.now_cell['now'] = self.now_cell['total']
                     logger.info(f'已为课件 {cell_info["name"]}({cell_id}) 添加时长至{num}秒，目标时长{long}秒')
                 else:
                     # 文档类型
                     # task_cell = self.progress.add_task(f'[red]{cell_info["name"]}', total=int(cell_info['page']))
-                    self.progress.update(task_cell, completed=0,
-                                         description=f'[yellow]{cell_info["name"]}({cell_info["type"]})', refresh=True)
+                    # self.progress.update(task_cell, completed=0,description=f'[yellow]{cell_info["name"]}({cell_info["type"]})', refresh=True)
 
                     def get_next_page(now, page):
                         if now == page:
@@ -692,6 +708,11 @@ class Course:
 
                     now_page = cell_info['now_page']
                     page_long = cell_info['page']
+
+                    # 设置进度
+                    self.now_cell['total'] = page_long
+                    self.now_cell['now'] = now_page
+
                     if now_page == 0:
                         # 针对图片类型
                         now_page += 1
@@ -709,9 +730,9 @@ class Course:
                         res_json = res.json()
                         if res_json['code'] == 1:
                             logger.info(f'成功为课件 {cell_info["name"]}({cell_id}) 添加页数至 {now_page} ，总页数 {page_long}')
-                            self.progress.update(task_cell, completed=now_page / page_long,
-                                                 description=f'[yellow]{cell_info["name"]}({cell_info["type"]})',
-                                                 refresh=True)
+                            # self.progress.update(task_cell, completed=now_page / page_long,description=f'[yellow]{cell_info["name"]}({cell_info["type"]})',refresh=True)
+                            # 更新进度
+                            self.now_cell['now'] = now_page
 
                             # 随机等待时长
                             wait = randint(5, 10)
@@ -723,13 +744,12 @@ class Course:
                         else:
                             logger.warning(f'为课件 {cell_info["name"]}({cell_id}) 添加页数失败：{res_json["msg"]}')
                             break
-                    self.progress.update(task_cell, completed=1, description=f'[green]{cell_info["name"]}(完成课件)',
-                                         refresh=True)
+                    # self.progress.update(task_cell, completed=1, description=f'[green]{cell_info["name"]}(完成课件)',refresh=True)
 
                     logger.info(f'已为课件 {cell_info["name"]}({cell_id}) 添加页数至 {now_page} ，目标页数 {page_long}')
         else:
-            self.progress.update(task_cell, completed=0, description=f'[red]{cell_info["name"]}(失败，建议重新登陆再试)',
-                                 refresh=True)
+            pass
+            # self.progress.update(task_cell, completed=0, description=f'[red]{cell_info["name"]}(失败，建议重新登陆再试)',refresh=True)
 
     def all_cell(self, course_id=None, course_name=None, class_id=None) -> list:
         """
@@ -737,7 +757,7 @@ class Course:
 
         :param course_id: （可选）课程ID，当两参数都有时以此为准
         :param course_name: （可选）课程名，会自动根据此来匹配课程名，可能会导致误差
-        :param class_id: （可选）开课班级ID
+        :param class_id: (可选) 开课班级ID。但是当此参数为空时，将无法获取课件学习进度
 
         :return: list 包含课件名称和ID的列表
         """
