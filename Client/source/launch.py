@@ -17,7 +17,7 @@ version = '0.1.0-Alpha'
 threads = ThreadPoolExecutor(max_workers=10)
 
 # 帮助网页
-HELP_PAGE_URL = 'file://../README.md'
+HELP_PAGE_URL = 'https://gitee.com/saucer216/icve-helper/blob/main/Client/README.md'
 
 # User对象
 me = None
@@ -431,6 +431,8 @@ class MainLayout(Layout):
         # 标题
         self.version_info()
 
+        self.welcome_dlg()
+
         # 初始禁用
         self.flash_course_btn.Disable()
         self.func_start_btn.Disable()
@@ -439,6 +441,9 @@ class MainLayout(Layout):
 
     def version_info(self):
         self.SetTitle(f'ICVE-HELPER [{version}]')
+
+    def welcome_dlg(self):
+        self._login_dlg('版本说明','当前版本为测试版本，存在大量BUG和未知情况，如果长时间无反应，请直接关闭软件，并前往项目地址报告。')
 
     def _login_dlg(self, title, content):
         dlg = wx.MessageDialog(None, u'{}'.format(content), u'{}'.format(title), wx.YES_DEFAULT | wx.ICON_QUESTION)
@@ -504,6 +509,9 @@ class MainLayout(Layout):
         self.func_start_btn.Disable()
 
         threads.submit(finish_all_courses, self, self.course_list.GetSelection())
+
+    def login_params( self, event ):
+        self._login_dlg('功能未实现','请等待后续更新')
 
 if __name__ == '__main__':
     app = wx.App()

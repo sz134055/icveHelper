@@ -1,9 +1,15 @@
 # ICVE-HELPER
 ## 如果有任何地方侵犯了您的权益，请在issue留言，我会及时处理、删除。
 
+### [Lite版本-适用于多平台](https://gitee.com/saucer216/icve-helper/tree/main/LiteClient)
+
 ![WELCOME](./img/welcome.png)
 
 ![正在工作...](./img/working.png)
+
+### [GUI版本-适用于WINDOWS]((https://gitee.com/saucer216/icve-helper/tree/main/Client))
+
+![Client](./img/client_index.png)
 
 ## INTRO
 **目前不定时更新**
