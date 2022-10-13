@@ -115,6 +115,7 @@ class User:
     def login(self):
         """
         登陆（APP），登陆后让session获取到相关信息并返回用户的相关信息
+
         :return: 登陆信息
         """
 
@@ -205,6 +206,7 @@ class User:
     def name(self):
         """
         用户姓名
+
         :return: 用户姓名
         """
         return self.user_info['displayName']
@@ -214,6 +216,7 @@ class User:
     def id(self):
         """
         用户ID
+
         :return: 用户ID
         """
         return self.user_info['userId']
@@ -223,6 +226,7 @@ class User:
     def token(self):
         """
         用户TOKEN
+
         :return: 用户TOKEN
         """
         return self.user_info['newToken']
@@ -232,6 +236,7 @@ class User:
     def header_url(self):
         """
         用户头像
+
         :return: 用户头像URL
         """
         return self.user_info['url']
@@ -241,6 +246,7 @@ class User:
     def type(self):
         """
         用户类型
+
         :return: 用户类型：学生或老师
         """
         if self.user_info['userType'] == '1':
@@ -253,6 +259,7 @@ class User:
     def number(self):
         """
         用户的工号
+
         :return: 学工号
         """
         return self.user_info['employeeNumber']
@@ -262,6 +269,7 @@ class User:
     def school_info(self):
         """
         用户所在学校信息
+
         :return: dict 包含学校名和ID
         """
         return {
@@ -274,6 +282,7 @@ class User:
     def cookies(self) -> dict:
         """
         返回COOKIES
+
         :return: dict cookies
         """
         return self.user_info['cookies']
@@ -283,6 +292,7 @@ class User:
     def req(self):
         """
         返回requests.session()
+
         :return: 包含登陆后所需信息的requests.session()
         """
         # 触发login_check
@@ -337,6 +347,7 @@ class Course:
     def all_course(self):
         """
         所有在修课程
+
         :return: 在修课程列表，列表中包含了课程及对应的信息
         """
         pay_laod = self.the_pay_load.copy()
@@ -379,8 +390,10 @@ class Course:
     def courseware(self, api, params) -> dict:
         """
         [TOOL]用于课件相关的操作
+
         :param api: 指定的API URL
         :param params: 指定附带的URL参数
+
         :return: 返回除 code 和 msg 外的回调信息
         """
         res = self.__s.get(url=api, params=params)
@@ -400,8 +413,10 @@ class Course:
     def all_module(self, course_id, class_id) -> list:
         """
         获取当前课程的大纲列表
+
         :param course_id: 课程ID
         :param class_id: 班级ID
+
         :return: list 大纲名称和ID列表
         """
         pay_load = self.the_pay_load.copy()
@@ -417,8 +432,10 @@ class Course:
     def get_topic(self, module_id, course_id) -> list:
         """
         获取章节列表
+
         :param module_id: 大纲ID
         :param course_id: 课程ID
+
         :return: list 包含章节名称和ID的列表
         """
         pay_load = self.the_pay_load.copy()
@@ -438,8 +455,12 @@ class Course:
     def get_cell(self, course_id, topic_id, class_id=None) -> list:
         """
         获取指定章节下的课件列表
+
+
         :param course_id: 课程ID
         :param topic_id: 章节ID
+        :param class_id: (可选) 开课班级ID
+
         :return: list 包含课件名称和ID的列表
         """
         pay_laod = self.the_pay_load.copy()
