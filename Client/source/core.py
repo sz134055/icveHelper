@@ -130,7 +130,7 @@ class User:
 
             # need_info = [设备名，设备系统版本号，职教云版本号，时间戳]
             need_info = [self.login_info['equipmentModel'], self.login_info['equipmentApiVersion'],
-                         icve_version[self.device_type]['version'], emit]
+                         icve_version[self.device_type]['version'], str(int(time.time())) + '000']
             device_id = ''
             for i in range(0, len(need_info)):
                 device_id = md5it(device_id) + need_info[i]
@@ -142,9 +142,10 @@ class User:
 
         # EMIT
         emit = str(int(time.time())) + '000'
+        device_token = get_device(emit)
         new_headers.update({
             'emit': emit,
-            'device': get_device(emit),
+            'device': device_token,
             'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
         })
 
@@ -176,7 +177,7 @@ class User:
         except Exception:
             logger.warning(f'登录失败！\n{res.text}')
             # 手动设置
-            res_json = {'code':0,'msg':'服务器拒绝服务，请查阅日志'}
+            res_json = {'code': 0, 'msg': f'服务器拒绝服务。响应内容：{res.text}'}
             # return {'code': '0', 'msg': res_json['msg']}
 
         if res_json['code'] == 1:
@@ -320,30 +321,9 @@ class Course:
 
         # 临时用于更新当前课件更新进度
         self.now_cell = {
-            'now':0,
-            'total':0
+            'now': 0,
+            'total': 0
         }
-
-    '''
-    # 用于设置RICH进程
-    def set_progress(self, progress):
-        self.progress = progress
-
-    # 用于添加RICH进程任务
-    def set_progress_task(self, task):
-        self.progress_task = task
-
-    '''
-
-    '''
-    # 用于添加RICH进程任务
-    def add_progress_task(self,centent,**kwargs):
-        return self.progress.add_task(centent,kwargs)
-
-    # 用于更新RICH进程任务
-    def update_progress(self,task,**kwargs):
-        return self.progress.update(task,kwargs)
-    '''
 
     def get_req(self, api, params):
         res = self.__s.get(url=apis[api], params=params)
@@ -667,7 +647,8 @@ class Course:
                             raise Exception(f'课件{cell_info["name"]}({cell_id})意外返回：\n{res.content}\n')
 
                         if res_json['code'] == 1:
-                            logger.info(f'成功为课件 {cell_info["name"]}({cell_id}) 添加时长至 {num} ，总时长 {long} (注意此时长非真正意义上视频时长)')
+                            logger.info(
+                                f'成功为课件 {cell_info["name"]}({cell_id}) 添加时长至 {num} ，总时长 {long} (注意此时长非真正意义上视频时长)')
 
                             # self.progress.update(task_cell, completed=num / long, description=f'[yellow]{cell_info["name"]}({cell_info["type"]})',refresh=True)
                             self.now_cell['now'] = num

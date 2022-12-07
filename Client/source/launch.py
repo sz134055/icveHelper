@@ -3,9 +3,10 @@ from random import randint, uniform
 import wx
 from layout import main as Layout
 from webbrowser import open_new_tab as browser_open_new
-from core import User, Course, logger,the_headers
+from core import User, Course, logger, the_headers
 from uuid import uuid4
-from concurrent.futures import ThreadPoolExecutor
+# from concurrent.futures import ThreadPoolExecutor
+from threading import Thread
 import time
 from json.decoder import JSONDecodeError
 import requests
@@ -14,7 +15,8 @@ import requests
 version = '0.1.0-Alpha'
 
 # 线程池
-threads = ThreadPoolExecutor(max_workers=10)
+# THREAD_MAX_WORKER = 10
+# threads = ThreadPoolExecutor(THREAD_MAX_WORKER)
 
 # 帮助网页
 HELP_PAGE_URL = 'https://gitee.com/saucer216/icve-helper/blob/main/Client/README.md'
@@ -304,6 +306,9 @@ def login(target, account, pswd):
         course = Course(me)
 
     else:
+        target._login_dlg('登录失败！', login_status['msg'])
+        wx.CallAfter(target.login_btn.Enable)
+        wx.CallAfter(target.login_btn.SetLabel, '登录')
         wx.CallAfter(target.account_input.Enable)
         wx.CallAfter(target.pswd_input.Enable)
 
@@ -413,7 +418,7 @@ def finish_all_courses(target, course_index: int):
                      f'{(target.total_gauge.GetValue() / target.total_gauge.GetRange()) * 100:.2f}%')
 
     # 让进度到100%
-    wx.CallAfter(target.total_gauge.SetValue,target.total_gauge.GetRange())
+    wx.CallAfter(target.total_gauge.SetValue, target.total_gauge.GetRange())
     wx.CallAfter(target._login_dlg, '任务结束', '已完成所有课件！')
     # 刷新列表
     get_all_cells(target, course_index)
@@ -423,6 +428,7 @@ def finish_all_courses(target, course_index: int):
     # 解禁按钮
     wx.CallAfter(target.flash_course_btn.Enable)
     wx.CallAfter(target.func_start_btn.Enable)
+
 
 class MainLayout(Layout):
     def __init__(self, parent):
@@ -443,7 +449,7 @@ class MainLayout(Layout):
         self.SetTitle(f'ICVE-HELPER [{version}]')
 
     def welcome_dlg(self):
-        self._login_dlg('版本说明','当前版本为测试版本，存在大量BUG和未知情况，如果长时间无反应，请直接关闭软件，并前往项目地址报告。')
+        self._login_dlg('版本说明', '当前版本为测试版本，存在大量BUG和未知情况，如果长时间无反应，请直接关闭软件，并前往项目地址报告。')
 
     def _login_dlg(self, title, content):
         dlg = wx.MessageDialog(None, u'{}'.format(content), u'{}'.format(title), wx.YES_DEFAULT | wx.ICON_QUESTION)
@@ -458,8 +464,8 @@ class MainLayout(Layout):
             pswd = self.pswd_input.GetValue()
             if account and pswd:
                 # 提交登录任务
-                threads.submit(login, self, account, pswd)
-
+                # threads.submit(login, self, account, pswd)
+                Thread(target=login, args=(self, account, pswd), daemon=True).start()
             else:
                 self._login_dlg('登录失败！', '账号或密码不能为空！')
         else:
@@ -470,7 +476,7 @@ class MainLayout(Layout):
                 # 解禁账户输入
                 self.account_input.Enable()
                 self.pswd_input.Enable()
-                # 清楚课程列表
+                # 清除课程列表
                 self.course_list.Clear()
                 self.cell_list.Clear()
                 global courses_info
@@ -490,7 +496,8 @@ class MainLayout(Layout):
     def flash_course_list(self, event):
         global me
         if me:
-            threads.submit(get_all_courses, self)
+            # threads.submit(get_all_courses, self)
+            Thread(target=get_all_courses, args=(self,), daemon=True).start()
 
     def help(self, event):
         browser_open_new(HELP_PAGE_URL)
@@ -498,7 +505,8 @@ class MainLayout(Layout):
     def get_cell_list(self, event):
         # 开始禁用列表，直到获取完毕
         self.course_list.Disable()
-        threads.submit(get_all_cells, self, self.course_list.GetSelection())
+        # threads.submit(get_all_cells, self, self.course_list.GetSelection())
+        Thread(target=get_all_cells, args=(self, self.course_list.GetSelection()), daemon=True).start()
 
     def finish_course(self, event):
         # 禁用所有列表
@@ -508,10 +516,12 @@ class MainLayout(Layout):
         self.flash_course_btn.Disable()
         self.func_start_btn.Disable()
 
-        threads.submit(finish_all_courses, self, self.course_list.GetSelection())
+        # threads.submit(finish_all_courses, self, self.course_list.GetSelection())
+        Thread(target=finish_all_courses, args=(self, self.course_list.GetSelection()), daemon=True)
 
-    def login_params( self, event ):
-        self._login_dlg('功能未实现','请等待后续更新')
+    def login_params(self, event):
+        self._login_dlg('功能未实现', '请等待后续更新')
+
 
 if __name__ == '__main__':
     app = wx.App()
