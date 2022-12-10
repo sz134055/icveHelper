@@ -951,8 +951,13 @@ class Course(BaseReq):
             'openClassId': class_id
         })
         cell_list = []
+
+        if topic_id == 'cxkbafgpykjjzxbd70vppq' and course_id == 'tcrzabupcqrhshx52gq1ha':
+            print('FIND IT')
+
         c_list = self.courseware(self.apis['all_cell'], params=pay_laod)
-        if c_list:
+        if c_list or isinstance(c_list,list):
+            # 修复因为无课件导致错误判断为获取失败
             for c in c_list:
                 if c['categoryName'] == '子节点':
                     # 将子节点下课件信息更新到课件列表
@@ -963,7 +968,7 @@ class Course(BaseReq):
                     {'name': c['cellName'], 'id': c['cellId'], 'type': c['categoryName'],
                      'process': c['studyCellPercent']})
 
-            logger.warning(f'成功获取课程{course_id}章节{topic_id}的课件列表')
+            logger.info(f'成功获取课程{course_id}章节{topic_id}的课件列表')
             return cell_list
         else:
             logger.warning(f'获取课程{course_id}章节{topic_id}的课件列表失败')
@@ -1324,8 +1329,11 @@ class Course(BaseReq):
                 logger.info(f'获取章节 {t["name"]} 对应的课件中...')
                 __cell_list = self.get_cell(course_id, t['id'], class_id)
                 if __cell_list:
-                    logger.info(f'成功获取章节 {t["name"]} 对应的课件.')
+                    logger.info(f'成功获取章节 {t["name"]} 对应的课件')
                     c_list += __cell_list
+                elif isinstance(__cell_list,list):
+                    logger.info(f'章节 {t["name"]} 下无课件，跳过')
+                    continue
                 else:
                     logger.warning(f'获取章节 {t["name"]} 对应的课件失败，无法继续获取所有课件')
                     return None
