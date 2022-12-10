@@ -760,7 +760,7 @@ class Course(BaseReq):
             logger.info(f'任务信息切换至->{self.process_name}({self.process_id})[{self.process_now}/{self.process_total}]')
             return self.process_now
         else:
-            logger.warning('找不到指定任务且切换为新任务时候未指定总进度')
+            logger.warning('找不到指定任务或切换为新任务时候未指定总进度')
             return self.process_now
 
     '''
@@ -951,10 +951,6 @@ class Course(BaseReq):
             'openClassId': class_id
         })
         cell_list = []
-
-        if topic_id == 'cxkbafgpykjjzxbd70vppq' and course_id == 'tcrzabupcqrhshx52gq1ha':
-            print('FIND IT')
-
         c_list = self.courseware(self.apis['all_cell'], params=pay_laod)
         if c_list or isinstance(c_list,list):
             # 修复因为无课件导致错误判断为获取失败
@@ -1111,6 +1107,13 @@ class Course(BaseReq):
 
         if cell_info:
             if int(cell_info['process']) == 100:
+                # 同样加载至任务列表，但默认视为总进度100
+                self.process_update(
+                    target_name=cell_info['name'],
+                    target_id=cell_info['id'],
+                    now_process=100,
+                    total_process=100
+                )
                 logger.info(f'课件 {cell_info["name"]}({cell_info["id"]}) 已达到100%完成度，将不会进行添加时长或页数操作')
             else:
                 header = self.get_headers(update_item={
@@ -1407,7 +1410,7 @@ class Course(BaseReq):
                         {'user_id': c['userId'], 'user_name': c['displayName'], 'content': c['content'],
                          'star': c['star']}
                         for c in c_list]
-                    if len(c_list) < 20:
+                    if len(c_list) < 20 and c_list:
                         pay_load['page'] = str(int(pay_load['page']) + 1)
                         continue
                     else:
