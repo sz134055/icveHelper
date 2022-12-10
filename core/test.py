@@ -26,11 +26,12 @@ def test_core(account,pswd):
         print('DONE')
         print(course.task_process)
         comment = course.all_comment(cell_choose['id'],course_choose['courseOpenId'],course_choose['openClassId'])
-        print(comment)
-        add_comment = course.add_comment(cell_choose['id'],course_choose['courseOpenId'],course_choose['openClassId'],input('COMMENt'),int(input('STAR')))
+        print(f'评论列表：{comment}')
+        add_comment = course.add_comment(cell_choose['id'],course_choose['courseOpenId'],course_choose['openClassId'],input('COMMENT'),int(input('STAR')))
         if add_comment:
             print('ADD COMMENT SUCCESSFULLY')
-
+        else:
+            print('FAIL TO ADD COMMENT')
         print('ALL DONE')
 
 
