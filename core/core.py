@@ -1448,15 +1448,19 @@ class Course(BaseReq):
         {7}
         '''.format(course_id, class_id, self.user_info['userId'], content, cell_id, star, "{", "}")
 
+        # 解决token中@不被URL转码问题
         form_load = {
-            'data': parse.quote(data_load),
+            'data': data_load,
             'newToken': self.user_info['newToken'],
             'sourceType': '3'
         }
+
+
+
         res = self.request(self.apis['add_comment'], data=form_load)
         if res['data'] == 0:
             res_json = res['data']
-            if res_json['code'] == 1:
+            if res_json['code'] == 0:
                 logger.info(f'用户{self.user_info["userId"]}为课程{course_id}下课件{cell_id}添加评论：{content}[{star}星]成功')
                 return True
             else:
