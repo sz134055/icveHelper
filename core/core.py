@@ -35,7 +35,7 @@ data：dict 返回数据
 class Logs:
     def __init__(self):
 
-        #self.work_path = split(realpath(__file__))[0]
+        # self.work_path = split(realpath(__file__))[0]
         self.log_path = self.__log_dir_init()
         self.IS_PATH_NORMAL = True
 
@@ -56,10 +56,9 @@ class Logs:
 
         file_name = strftime('%Y-%m-%d_%H-%M-%S', localtime())
         log_file_path = join(self.log_path, file_name + '.log')
-        file_log = logging.FileHandler(filename=log_file_path,encoding='utf-8')
+        file_log = logging.FileHandler(filename=log_file_path, encoding='utf-8')
         file_log.setFormatter(
             logging.Formatter('%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s'))
-
 
         log = logging.getLogger()
         for logger_handler in log.handlers:
@@ -74,6 +73,7 @@ class Logs:
 
 
 logger = Logs().get_logger()
+
 
 class CONF:
     # 配置文件初始信息
@@ -123,7 +123,6 @@ class CONF:
                 # 初始信息填入
                 json_dump(self.BASE_INFO, f, ensure_ascii=False)
                 return self.__get_config()
-
 
     def get_icve_version(self) -> dict:
         """
@@ -205,15 +204,40 @@ class BaseReq:
             logger.warning(f"请求失败->{url}；[{res.status_code}]响应内容：{res.text}")
             return {"code": -1, "msg": f"[{res.status_code}]响应内容：{res.text}", "data": {}}
 
-    def get_cookies(self):
+    @property
+    def req_cookies(self):
+        """
+        返回Cookies（RequestsCookieJar）
+
+        :return: Cookies（RequestsCookieJar）
+        """
         return self.s.cookies
 
-    def flash_req(self, req: requests.session()) -> None:
+    def req_flash(self, req) -> None:
+        """
+        替换当前的requests.session()对象
+
+        :param req: requests.session()对象
+        :return: None
+        """
         self.s = req
 
-    def clear_cookies(self):
+    def req_clear_cookies(self) -> None:
+        """
+        清除Cookies
+
+        :return: None
+        """
         self.s.cookies.clear()
 
+    @property
+    def req_headers(self) -> dict:
+        """
+        返回Headers
+
+        :return: Headers
+        """
+        return self.the_headers
 
 def login_check(func):
     """
@@ -300,8 +324,16 @@ class User(BaseReq):
         """
 
         # 更新
-        self.login_info.update(login_info)
-        self.user_info.update(self.login_info)
+        if login_info['equipmentModel'] and login_info['equipmentApiVersion']:
+            self.login_info.update(login_info)
+            self.ua_switch()
+            self.user_info.update(self.login_info)
+        else:
+            del login_info['equipmentApiVersion']
+            del login_info['equipmentModel']
+            self.login_info.update(login_info)
+            self.user_info.update(self.login_info)
+
 
     def __save_init(self) -> str:
         """
@@ -331,7 +363,7 @@ class User(BaseReq):
     def save_login(self, account: str, save_info: dict):
         save_name = join(self.__save_file_path, account + '.json')
         try:
-            with open(save_name, 'w+',encoding='utf-8') as f:
+            with open(save_name, 'w+', encoding='utf-8') as f:
                 json_dump(save_info, f, ensure_ascii=False)
                 logger.info(f'成功保存账户 {account} 存档')
         except Exception as e:
@@ -345,25 +377,21 @@ class User(BaseReq):
         :return: 查询到的信息或None
         """
         try:
-            with open(join(self.__save_file_path, account + '.json'), 'r',encoding='utf-8') as f:
+            with open(join(self.__save_file_path, account + '.json'), 'r', encoding='utf-8') as f:
                 logger.info(f'读取到账户 {account} 的存档信息')
                 return json_load(f)
         except FileNotFoundError:
             logger.info(f'未能读取到账户 {account} 的存档信息')
             return None
 
-    def ua_switch(self, sys_type: str = None) -> str:
+    def ua_switch(self) -> str:
         """
         用于切换请求头中User-Agent当设备为iOS或Android时的情况
 
-        :param sys_type: 手机类型：苹果设备为iphone或ios（任意大小写），其它全部视为安卓
         :return: 会返回当前请求头中User-Agent，以供参考
         """
 
-        if sys_type:
-            type_name = sys_type
-        else:
-            type_name = self.login_info['equipmentModel']
+        type_name = self.login_info['equipmentModel']
 
         if 'iphone' or 'ios' in type_name.lower():
             # iOS
@@ -452,6 +480,7 @@ class User(BaseReq):
         # CLIENT ID
         if not self.login_info['clientId']:
             self.login_info.update({'clientId': self.gen_client_id()})
+            self.user_info.update(self.login_info)
 
         # FORM LOAD
         login_form = self.login_info.copy()
@@ -470,7 +499,6 @@ class User(BaseReq):
         })
 
         res = self.request(url=self.apis['login'], header=header, data=login_form)
-
         if res['code'] == -1:
             logger.warning(f'登录时发生问题：{res["msg"]}')
             return res
@@ -491,7 +519,7 @@ class User(BaseReq):
                     'url': res_json['url'],  # 用户头像URL
                     'schoolName': res_json['schoolName'],  # 用户所在学校名
                     'schoolId': res_json['schoolId'],  # 用户所在学校ID
-                    'cookies': utils.dict_from_cookiejar(self.get_cookies())  # dict Cookies
+                    'cookies': utils.dict_from_cookiejar(self.req_cookies)  # dict Cookies
                 })
                 logger.info(f'登录成功 -> 学号：{self.user_info["employeeNumber"]}')
                 # 存档
@@ -539,7 +567,7 @@ class User(BaseReq):
 
     @property
     @login_check
-    def header_url(self) -> str:
+    def user_header_url(self) -> str:
         """
         用户头像
 
@@ -614,24 +642,20 @@ class User(BaseReq):
         return self.__s
     '''
 
+    @login_check
     def my_courses(self):
         """
         获取课程
 
         :return: 返回Course对象
         """
-        try:
-            # 触发登录检测
-            self.id
-            course = Course()
-            course.set_user(self.user_info, self.s)
-            course.flash_req(self.s)
-            course.get_headers({"Cookie":f"auth={utils.dict_from_cookiejar(self.s.cookies)['auth']}"},False)
-            logger.info('获取课程对象')
-            return course
-        except KeyError:
-            logger.warning('未成功登录，无法获取课程！')
-            return None
+        course = Course()
+        course.set_user(self.user_info, self.s)
+        course.req_flash(self.s)
+        course.get_headers({"Cookie": f"auth={utils.dict_from_cookiejar(self.s.cookies)['auth']};acw_tc={utils.dict_from_cookiejar(self.s.cookies)['acw_tc']}"}, False)
+        course.get_headers(self.req_headers,new=False)
+        logger.info('获取课程对象')
+        return course
 
 
 class Course(BaseReq):
@@ -655,7 +679,7 @@ class Course(BaseReq):
         self.progress_task = None
 
     def set_user(self, user_info: dict, user_req: requests.session()) -> None:
-        self.flash_req(user_req)
+        self.req_flash(user_req)
         self.user_info = user_info
         # 更新公用PAYLOAD
         self.the_pay_load = {
@@ -1090,7 +1114,7 @@ class Course(BaseReq):
                     'Accept-Language': 'zh-Hans-CN;q=1.0',
                     'Accept-Encoding': 'gzip;q=1.0, compress;q=0.5',
                     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36 Edg/93.0.961.52',
-                    'Cookie': 'auth=' + utils.dict_from_cookiejar(self.get_cookies())['auth']
+                    'Cookie': 'auth=' + utils.dict_from_cookiejar(self.req_cookies)['auth']
                 })
 
                 form_load = {
@@ -1143,7 +1167,7 @@ class Course(BaseReq):
                     num = get_next_long(num, long)
                     while num <= long:
                         # 暂时忘了这里清楚COOKIES原因...
-                        self.clear_cookies()
+                        self.req_clear_cookies()
 
                         form_load['studyNewlyTime'] = num
                         res = self.request(self.apis['finish_cell'], data=form_load, header=header)
