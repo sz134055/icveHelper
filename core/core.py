@@ -98,7 +98,7 @@ class CONF:
             'self_comment': 'https://zjyapp.icve.com.cn/newMobileAPI/FaceTeach/getFaceTeachSelfEvaluation',
             'cell_info': 'https://zjyapp.icve.com.cn/newMobileAPI/AssistTeacher/getCellInfoByCellId',
             'cell_info_new': 'https://zjy2.icve.com.cn/api/common/Directory/viewDirectory',
-            'finish_cell': 'https://zjy2.icve.com.cn/api/common/Directory/stuProcessCellLog',
+            'finish_cell': 'https://zjy2.icve.com.cn/api/common/Directory/stuProcessCellLog'
         }
     }
 
@@ -115,14 +115,16 @@ class CONF:
         :return: 配置文件内容
         """
         try:
-            with open('setting.json') as f:
-                conf = json_load(f)
-                return conf
+            f = open('setting.json')
+            conf = json_load(f)
+            f.close()
+            return conf
         except FileNotFoundError:
-            with open('setting.json', 'w+') as f:
-                # 初始信息填入
-                json_dump(self.BASE_INFO, f, ensure_ascii=False)
-                return self.__get_config()
+            f = open('setting.json', 'w+')
+            # 初始信息填入
+            json_dump(self.BASE_INFO, f, ensure_ascii=False)
+            f.close()
+            return self.__get_config()
 
     def get_icve_version(self) -> dict:
         """
@@ -239,6 +241,7 @@ class BaseReq:
         """
         return self.the_headers
 
+
 def login_check(func):
     """
     登录检查装饰器
@@ -334,7 +337,6 @@ class User(BaseReq):
             self.login_info.update(login_info)
             self.user_info.update(self.login_info)
 
-
     def __save_init(self) -> str:
         """
         初始化存档目录，不存在则创建，并最终返回目录位置
@@ -423,6 +425,8 @@ class User(BaseReq):
         """
         登陆至ICVE（模拟APP登录），登陆后会同步登录信息并返回登录状态及用户的相关信息
 
+        :param account: 职教云账号
+        :param pswd: 职教云密码
         :return: 登陆状态和用户信息
         """
 
@@ -479,7 +483,11 @@ class User(BaseReq):
 
         # CLIENT ID
         if not self.login_info['clientId']:
-            self.login_info.update({'clientId': self.gen_client_id()})
+            __save_user = self.get_save(self.login_info['userName'])
+            if __save_user:
+                self.login_info.update({'clientId': __save_user['info']['clientId']})
+            else:
+                self.login_info.update({'clientId': self.gen_client_id()})
             self.user_info.update(self.login_info)
 
         # FORM LOAD
@@ -534,6 +542,7 @@ class User(BaseReq):
                 # 失败
                 logger.warning(f'登录失败；服务器响应：{res_json["msg"]}')
                 return {'code': 1, 'msg': res_json['msg'], 'data': {}}
+
 
     @property
     @login_check
@@ -652,8 +661,10 @@ class User(BaseReq):
         course = Course()
         course.set_user(self.user_info, self.s)
         course.req_flash(self.s)
-        course.get_headers({"Cookie": f"auth={utils.dict_from_cookiejar(self.s.cookies)['auth']};acw_tc={utils.dict_from_cookiejar(self.s.cookies)['acw_tc']}"}, False)
-        course.get_headers(self.req_headers,new=False)
+        course.get_headers({
+            "Cookie": f"auth={utils.dict_from_cookiejar(self.s.cookies)['auth']};acw_tc={utils.dict_from_cookiejar(self.s.cookies)['acw_tc']}"},
+            False)
+        course.get_headers(self.req_headers, new=False)
         logger.info('获取课程对象')
         return course
 
@@ -952,7 +963,7 @@ class Course(BaseReq):
         })
         cell_list = []
         c_list = self.courseware(self.apis['all_cell'], params=pay_laod)
-        if c_list or isinstance(c_list,list):
+        if c_list or isinstance(c_list, list):
             # 修复因为无课件导致错误判断为获取失败
             for c in c_list:
                 if c['categoryName'] == '子节点':
@@ -1334,7 +1345,7 @@ class Course(BaseReq):
                 if __cell_list:
                     logger.info(f'成功获取章节 {t["name"]} 对应的课件')
                     c_list += __cell_list
-                elif isinstance(__cell_list,list):
+                elif isinstance(__cell_list, list):
                     logger.info(f'章节 {t["name"]} 下无课件，跳过')
                     continue
                 else:
@@ -1454,8 +1465,6 @@ class Course(BaseReq):
             'newToken': self.user_info['newToken'],
             'sourceType': '3'
         }
-
-
 
         res = self.request(self.apis['add_comment'], data=form_load)
         if res['data'] == 0:
