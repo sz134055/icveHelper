@@ -483,7 +483,11 @@ class User(BaseReq):
 
         # CLIENT ID
         if not self.login_info['clientId']:
-            self.login_info.update({'clientId': self.gen_client_id()})
+            __save_user = self.get_save(self.login_info['userName'])
+            if __save_user:
+                self.login_info.update({'clientId': __save_user['info']['clientId']})
+            else:
+                self.login_info.update({'clientId': self.gen_client_id()})
             self.user_info.update(self.login_info)
 
         # FORM LOAD
