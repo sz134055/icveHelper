@@ -327,15 +327,10 @@ class User(BaseReq):
         """
 
         # 更新
-        if login_info['equipmentModel'] and login_info['equipmentApiVersion']:
-            self.login_info.update(login_info)
-            self.ua_switch()
-            self.user_info.update(self.login_info)
-        else:
-            del login_info['equipmentApiVersion']
-            del login_info['equipmentModel']
-            self.login_info.update(login_info)
-            self.user_info.update(self.login_info)
+        self.login_info.update(login_info)
+        self.ua_switch()
+        self.user_info.update(self.login_info)
+
 
     def __save_init(self) -> str:
         """
