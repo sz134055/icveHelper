@@ -1,16 +1,16 @@
 from traceback import format_exc as traceback_exc
 from rich.console import Console
 from rich.table import Table
-from lite import logger
-from lite import core
+from core import logger, User, Course
 import requests
-import time
+from time import sleep as time_sleep
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
-from uuid import uuid4
+from os import listdir
+from threading import Thread,enumerate
 
 # 适用于打包的的新版本
-version = '0.5.4'
-build = '20221008'
+version = '0.6.0'
+build = '20221214'
 
 # 全局Console
 console = Console()
@@ -26,192 +26,133 @@ __the_logo = '''
 |_| \_____| |___/     |_____| 
 '''
 
-
-def uuid_get():
-    console.print('正在生成clientId，请稍后...')
-    new_uuid = uuid4()
-    new_uuid = str(new_uuid).replace('-', '')
-    return new_uuid
-
-
-def all_my_course(user):
+def progress_func(p: Progress, task_len: int,c:Course):
     """
-    获取所有课程表单并格式化输出
-    : param user: 成功登陆的User类
-    : return 获取到的完整课程表单
+    用于自动更新进度条
+
+    :param p: console.Progress
+    :param task_len: 总任务长度
+    :param c: core.Course
+    :return: None
     """
-    console.print('正在拉取你的所有课程')
-    course = core.Course(user)
+    # 上一任务
+    __last_task = ''
+    # 当前任务
+    __now_task = ''
 
-    course_table = Table(show_header=True, header_style="bold magenta")
-    course_table.add_column("序号", justify='center', style='green')
-    course_table.add_column("课程ID", justify='center', style='red')
-    course_table.add_column("课程名", justify='center')
-    course_table.add_column("你当前所处班级ID", justify="center", style='red')
-    course_table.add_column("教师及其编号", justify="center")
-    course_table.add_column("进度(可能不准确)", justify="center")
-    course_table.add_column("得分(可能不准确)", justify="center")
-    course_table.add_column("邀请码", justify="center")
-
-    course_list = course.all_course
-    num = 1
-    for c in course_list:
-        course_table.add_row(
-            str(num),
-            c['courseOpenId'],
-            c['courseName'],
-            c['openClassId'],
-            f'{c["mainTeacherName"]}({c["mainTeacherNum"]})',
-            str(c['process']),
-            str(c['totalScore']),
-            c['InviteCode']
-        )
-        num += 1
-    console.print(course_table)
-    console.print('->[yellow]进度与得分请以实际APP或网页为，仅供参考[/yellow]\n')
-
-    return course_list
-
-
-def all_cell(user, course_id, class_id=None):
-    """
-    获取某一课程的所有课件列表
-    : param user : 成功登陆的User类
-    : param course_id : 指定的课程ID
-    : param class_id : 指定的开课ID 
-    : return : 完整的课件列表 
-    """
-    console.print(f'[yellow]正在拉取课程 {course_id} 下的所有课件[/yellow]')
-
-    course = core.Course(user)
-
-    course_table = Table(show_header=True, header_style="bold magenta")
-    course_table.add_column("课件名", justify='center')
-    course_table.add_column("课程ID", justify='center', style='red')
-    course_table.add_column("课件类型", justify="center", style='yellow')
-    course_table.add_column("进度(可能不准确)", justify="center")
-
-    with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            BarColumn(),
-            TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
-            transient=True,
-    ) as progress:
-        task_all_cell = progress.add_task(description='获取所有课件', total=100, start=False)
-        cell_list = course.all_cell(course_id=course_id, class_id=class_id)
-        for c in cell_list:
-            course_table.add_row(
-                c['name'],
-                c['id'],
-                c['type'],
-                str(c['process'])
-            )
-        progress.update(task_all_cell, completed=100, refresh=True)
-        console.print('')  # 避免与进度条重合
-        console.print(course_table)
-        console.print('->[yellow]进度与得分请以实际APP或网页为，仅供参考[/yellow]\n')
-
-    return cell_list
-
+    # 进度条 总任务
+    task_total = p.add_task('[yellow]总进度', total=task_len)
+    task_cell = p.add_task(f'[green]当前课程', total=1)
+    # 进度条 当前任务
+    while not p.finished:
+        # 当总任务并未结束时
+        while c.process_name:
+            # 当有任务时
+            __now_task = c.process_name
+            p.update(task_cell,total=c.process_total,description=f'[yellow]{c.process_name}',refresh=True)
+            while c.process_now <= c.process_total and __now_task != __last_task:
+                # 当当前任务为完成时
+                p.update(task_cell, completed=c.process_now, description=f'[yellow]{c.process_name}', refresh=True)
+                if c.process_now == c.process_total:
+                    p.update(task_cell,completed=c.process_total,description=f'[yellow]{c.process_name}',refresh=True)
+                    # 总进度步进1
+                    p.update(task_total,advance=1,refresh=True)
+                    # 保存已经完成的任务名，防止重复刷新总进度导致其100%
+                    __last_task = c.process_name
+                    break
+            time_sleep(0.4)
+        else:
+            # 修复任务完成时while循环不退出导致高占用
+            break
 
 # 登陆表单
-login_info = {
-    'appVersion': '2.8.43',
-    'clientId': '',
-    'equipmentApiVersion': '14.8',
-    'equipmentAppVersion': '2.8.43',
-    'equipmentModel': 'iPhone 11',
-    'userName': '',
-    'userPwd': '',
-}
 auto_login = False
 
-# 课程选择
-course_choose = ''
-course_choose_id = None
-course_choose_list = []
 # 课程指令
 command = ''
 
+me = User()
 while True:
     # 主循环
     try:
         console.print(f'[right]{__the_logo}[/right]\nWELCOME ICVE！\n本程序仅学习之余制作，用于帮助学习\n如用于盈利后果自负\n', style='bold red')
-        console.print('脚本全程你可以按 [red]CTRL+C或CTRL+Z 并回车[/red] 来返回上一步')
-
+        console.print('[red]发生任何报错请截图并配合logs下日志文件提交至仓库issue\n')
+        console.print('登录超时请多试几次...')
         console.print('版本：' + version, style='red')
         console.print('-' * 20)
         # broadcast()
         console.print('-' * 20)
 
-        # 登陆
-        if login_info['userName'] and login_info['userPwd']:
-            if not auto_login:
-                if console.input('已检测到你之前已经登陆过，是否直接登陆？\n[red]输入任意值来直接登陆[/red]，直接回车将需要重新输入\n'):
-                    if console.input('是否开启下次自动登陆？\n下次需要重新登陆时会自动登陆，不会再次询问\n输入任意值来开启\n'):
+        # 查询存档
+        try:
+            __save_list = listdir('save')
+            if __save_list:
+                console.print('发现已保存的登录记录')
+                __save_user_table = Table(show_header=False, header_style="bold magenta")
+                __save_user_table.add_column("序号", justify='center')
+                __save_user_table.add_column("账户", justify='center')
+                for __save_user in __save_list:
+                    __save_user_table.add_row(str(__save_list.index(__save_user) + 1), __save_user.replace('.json', ''))
+
+                console.print(__save_user_table)
+
+                command = console.input('输入对应序号直接登录，或直接回车输入账号密码进行登录\n在此输入：')
+                if command:
+                    if int(command) < 1 or int(command) > len(__save_list):
+                        console.print('你输入了错误的序号')
+                    else:
+                        __save_info = me.get_save(__save_list[int(command) - 1].replace('.json', ''))
+                        me.login_setting({
+                            "appVersion": __save_info['info']["appVersion"],
+                            "clientId": __save_info['info']["clientId"],
+                            "equipmentApiVersion": __save_info['info']["equipmentApiVersion"],
+                            "equipmentAppVersion": __save_info['info']["equipmentAppVersion"],
+                            "equipmentModel": __save_info['info']["equipmentModel"],
+                            "userName": __save_info['info']["userName"],
+                            "userPwd": __save_info['info']["userPwd"],
+                        })
                         auto_login = True
                 else:
-                    # 清空表单
-                    login_info['userName'] = ''
-                    login_info['userPwd'] = ''
-                    raise KeyboardInterrupt
-            else:
-                console.print('自动登陆已启用')
+                    auto_login = False
+        except FileNotFoundError:
+            # 无存档
+            pass
 
-        if not login_info['userName'] or not login_info['userPwd']:
-            login_info['userName'] = console.input('请输入你的职教云账号\n')
-            login_info['userPwd'] = console.input('\n请输入你的职教云密码\n[red]注意：密码不会显示出来[/red]\n', password=True)
-
-            # need_auto_comment = 'true'
-            # auto_comment_info = {}
-            auto_comment_info = {
-                'star': 5,
-                'content': '好'
-            }
-            need_auto_comment = console.input(
-                '\n是否需要对课件自动评论？[red]留空为禁用，输入任意值启用[/red]\n会自动对比前20*[red]1[/red]的评论以避免出现重复评论\n你可以暂时不启用，待稍后在具体到某一课件时再考虑启用与否\n')
-            if need_auto_comment:
-                auto_comment_info_star = console.input('\n输入课件评论评分（单位星，填写范围1-5）\n回车留空或错误输入默认为[green]5[/green]\n')
-                auto_comment_info_content = console.input('\n输入课件评论内容\n回车留空或错误输入默认为[green]好！[/green]\n')
-                try:
-                    auto_comment_info_star = int(auto_comment_info_star)
-                    auto_comment_info['star'] = auto_comment_info_star
-                except ValueError:
-                    console.print('\n[red]评分未填写有误，已设为默认值[/red]')
-                if auto_comment_info_content:
-                    auto_comment_info['content'] = auto_comment_info_content
-            else:
-                console.print('\n[red]自动评论被取消[/red]')
-                auto_comment_info = {}
-
+        # 手动登陆
+        if not auto_login:
+            login_info = {}
+            login_info['userName'] = console.input('请输入你的职教云账号\n在此输入：')
+            login_info['userPwd'] = console.input('\n请输入你的职教云密码\n[red]注意：密码不会显示出来[/red]\n在此输入：', password=True)
             # 高级登陆
             console.print('\n是否需要更加详细的高级登陆项？此项可以指定你想要模拟登陆的手机型号等\n默认已自动生成无需手动，不影响账号登陆及后续操作')
-            if console.input('\n默认为不启动，输入任意字符来配置高级启动项\n'):
+            if console.input('\n默认为不启动，输入任意字符来配置高级启动项\n在此输入或回车跳过：'):
                 # CLIENTID
-                __user_client_id = console.input(f'输入CLIENT ID，可以视为你设备的唯一身份证号\n留空或不满足32位值将会重新生成\n')
-                if __user_client_id and len(__client_id) >= 32:
+                __user_client_id = console.input(f'输入CLIENT ID，可以视为你设备的唯一身份证号\n留空或不满足32位值将会重新生成\n在此输入：')
+                if __user_client_id and len(__user_client_id) == 32:
                     __client_id = __user_client_id
                 else:
-                    __client_id = uuid_get()
+                    __client_id = me.gen_client_id()
                     console.print(f'CLIENT ID 已重新生成为 [yellow]{__client_id}[/yellow]')
                 login_info['clientId'] = __client_id
 
                 # MODEL
                 __user_device_model = console.input(
-                    f'\n输入手机型号\n当前默认设置为[green]{login_info["equipmentModel"]}[/green]\n留空会保持默认\n')
+                    f'\n输入手机型号\n当前默认设置为[green]{login_info["equipmentModel"]}[/green]\n留空会保持默认\n在此输入：')
                 if __user_device_model:
                     login_info['equipmentModel'] = __user_device_model
 
                 # OS 
                 __user_device_os = console.input(
-                    f'\n输入手机系统版本\n当前默认设置为[green]{login_info["equipmentApiVersion"]}[/green]\n留空会保持默认\n')
+                    f'\n输入手机系统版本\n当前默认设置为[green]{login_info["equipmentApiVersion"]}[/green]\n留空会保持默认\n在此输入：')
                 if __user_device_os:
                     login_info['equipmentApiVersion'] = __user_device_os
 
-            # CLIENT ID 检测
-            if not login_info['clientId']:
-                login_info['clientId'] = uuid_get()
+            me.login_setting(login_info)
+
+
+            # CLIENT ID
+            me.gen_client_id()
+
 
             # 详细登陆表单展示
             console.print('完整登陆选项如下：')
@@ -222,7 +163,7 @@ while True:
             login_info_table.add_column("说明", justify="center")
             login_info_table.add_row(
                 "userName",
-                login_info['userName'],
+                me.login_info['userName'],
                 "account",
                 "职教云账号"
             )
@@ -235,78 +176,86 @@ while True:
 
             login_info_table.add_row(
                 "appVersion",
-                login_info['appVersion'],
+                me.login_info['appVersion'],
                 "ios_version和ios_build或android_version",
-                "用于指定职教云APP版本[red]（注意当前不支持替换）[/red]",
+                "用于指定职教云APP版本[red][/red]",
             )
             login_info_table.add_row(
                 "equipmentAppVersion",
-                login_info['equipmentAppVersion'],
+                me.login_info['equipmentAppVersion'],
                 "ios_version和ios_build或android_version",
-                "用于指定职教云APP版[red]（注意当前不支持替换）[/red]",
+                "用于指定职教云APP版[red][/red]",
             )
             login_info_table.add_row(
                 "equipmentApiVersion",
-                login_info['equipmentApiVersion'],
+                me.login_info['equipmentApiVersion'],
                 "os_version",
                 "用于指定你想要模拟登陆的设备系统版本，如14.8",
             )
             login_info_table.add_row(
                 "equipmentModel",
-                login_info['equipmentModel'],
+                me.login_info['equipmentModel'],
                 "model_name",
                 "模拟登陆的设备名称，如iPhone 11，[red]不影响登陆[/red]",
             )
             login_info_table.add_row(
                 "clientId",
-                login_info['clientId'],
+                me.login_info['clientId'],
                 "clientId",
                 "模拟登陆的设备UUID，[red]不影响登陆[/red]",
             )
 
-            if auto_comment_info:
-                login_info_table.add_row(
-                    "star",
-                    str(auto_comment_info['star']),
-                    "star",
-                    "用于自动课件评论的评分",
-                )
-                login_info_table.add_row(
-                    "comment",
-                    auto_comment_info['content'],
-                    "comment",
-                    "用于自动课件评论的评论",
-                )
-
             console.print(login_info_table)
             # 详细登陆表单展示
-            if console.input('确认没有问题后回车开始登陆，[red]输入任意值重新输入[/red]'):
+            if console.input('确认没有问题后回车开始登陆，[red]输入任意值并按回车重新输入[/red]\n在此输入或回车开始登录：'):
                 continue
 
         # 开始登陆
-        if login_info['userName'] and login_info['userPwd']:
-            console.print('正在尝试登陆...', style='yellow')
+        me.login()
 
         try:
-            me = core.User(login_info)
-            # 登陆检查
-            me.user_info['userId']
+            __my_name = me.name
+            if isinstance(__my_name, str):
+                console.print(f'已登录->{me.name}（{me.number}）', style='green')
+            else:
+                console.input('登录失败！请查阅logs目录下日志\n按回车键重试')
+                continue
         except requests.exceptions.HTTPError:
             console.print('\n[red]无网络链接或无法链接至职教云服务器，请检查网络或稍后再试[/red]')
-            console.input('[red]->[/red]输入任意字符或回车继续')
-            auto_login = False
-            continue
-        except KeyError:
-            console.input('登陆失败！按任意键重试')
+            console.input('[red]->[/red]按回车键重试')
             auto_login = False
             continue
 
-        console.print('登陆成功！', style='green')
-
+        course = me.my_courses()
         while True:
             # 课程主循环
 
-            course_list = all_my_course(user=me)
+            console.print('正在拉取你的所有课程')
+            course_list = course.all_course
+            # 展示所有课程
+            course_table = Table(show_header=True, header_style="bold magenta")
+            course_table.add_column("序号", justify='center', style='green')
+            course_table.add_column("课程ID", justify='center', style='red')
+            course_table.add_column("课程名", justify='center')
+            course_table.add_column("你当前所处班级ID", justify="center", style='red')
+            course_table.add_column("教师及其编号", justify="center")
+            course_table.add_column("进度(可能不准确)", justify="center")
+            course_table.add_column("得分(可能不准确)", justify="center")
+            course_table.add_column("邀请码", justify="center")
+
+            for c in course_list:
+                course_table.add_row(
+                    str(course_list.index(c) + 1),
+                    c['courseOpenId'],
+                    c['courseName'],
+                    c['openClassId'],
+                    f'{c["mainTeacherName"]}({c["mainTeacherNum"]})',
+                    str(c['process']),
+                    str(c['totalScore']),
+                    c['InviteCode']
+                )
+            console.print(course_table)
+            console.print('->[yellow]进度与得分请以实际APP或网页为，仅供参考[/yellow]\n')
 
 
             # 课程选择
@@ -326,167 +275,117 @@ while True:
 
             while True:
                 # 课程任务主循环
-                #global auto_comment_info
-                try:
-                    if not course_choose_id:
-                        course_choose = console.input(
-                            '\n[red]->[/red]选择一门课程（其名称或完整的ID）以继续：\n[yellow]->[/yellow]名称可以不填写完全，例如课程 大学生创新创业，可写大学生创新\n[green]->[/green]但对于名称略有重复的课程如 大学语文与大学英语 请至少填写为 大学语或大学英\n'
-                            '现在你可以使用[red]d+序号[/red]选课甚至多选（序号见上表,序号选择必须保证第一个是d），用空格分割，如：[red]d1 2 3[/red]，或者使用斜杠(/)分割来选择一个范围，如：[red]d1/3[/red]，表示选中序号[red]1，2，3[/red]这三门课程\n')
-                        if 'd' == course_choose[0]:
-                            # 序号选择
-                            course_choose_num = course_choose.replace('d', '')
-                            make_course_choose(course_choose_num)
-                            course_choose_id = 'wait'  # 占位
-                            continue
-                    elif course_choose_list:
-                        if course_choose_id == 'wait':
-                            # 转载COURSE ID
-                            course_choose_id = course_choose_list[0]
+                # global auto_comment_info
+                course_choose_list = []
+
+                command = console.input('输入序号选择课程；若多选，序号与序号之间必须留有空格，例如：\n1 3 4代表选择序号1、3、4这三门课\n在此输入：')
+                __course_choose_list = command.split(' ')
+                # 序号检查
+
+                for __choose in __course_choose_list:
+                    try:
+                        if int(__choose) < 1 and int(__choose) > len(course_list):
+                            raise ValueError
                         else:
-                            course_choose_list.remove(course_choose_id)
-                            try:
-                                course_choose_id = course_choose_list[0]
-                            except IndexError:
-                                course_choose_id = None
-                                console.print('已完成所有选择的课程')
+                            course_choose_list.append(course_list[int(__choose) - 1])
+                    except ValueError:
+                        logger.warning(f'用户{me.number}选课时，输入了错误的序号->{__choose}')
+                        console.print(f'你输入了一个错误的序号：{__choose}', style='red')
+
+                console.print('你选择了以下课件...')
+                __course_choose_table = __save_user_table = Table(show_header=False, header_style="bold magenta")
+                __course_choose_table.add_column("课程名", justify='center')
+                for course_choose in course_choose_list:
+                    __course_choose_table.add_row(course_choose['courseName'])
+
+                console.print(__course_choose_table)
+
+                comment_info = {'content':'','star':5}
+                __need_commant = False
+                if console.input('你需要为你选择的课程所有课件进行评论吗？\n如果需要请输入评论内容，不评论请直接按回车键\n在此输入或直接回车：'):
+                    # 需要评论
+                    __need_commant = True
+                    comment_info['content'] = command
+                    command = console.input('输入评分（星）仅整数，最大5，最小1，默认为5\n例如输入5，表示给打5星\n在此输入：')
+                    if int(command) and int(command) > 0 and int(command) < 6:
+                        comment_info['star'] = int(command)
                     else:
-                        if console.input(f'\n[red]->[/red]当前默认选择上次课程[yellow] {course_choose}[/yellow]，回车继续，任意字符重新选择'):
-                            course_choose_id = ''
-                            continue
-                    # 课程选择
+                        comment_info['star'] = 5
 
-                    course_choose_info = {}
-                    if not course_choose_id:
-                        continue
-                    else:
-                        for c in course_list:
-                            if course_choose in c['courseName'] or course_choose == c[
-                                'courseOpenId'] or course_choose_id == \
-                                    c['courseOpenId']:
-                                course_choose = c['courseName']
-                                course_choose_info = c.copy()
-                                break
+                    console.print(f'评论内容：{comment_info["content"]} 评论打分：{comment_info["star"]}')
+                else:
+                    __need_commant = False
 
-                        if not course_choose_info:
-                            console.print('未能选中任何课程，请重新选择', style='red')
-                            continue
 
-                    console.print(f'\n当前已选中课程[red] {course_choose} ({course_choose_id})[/red]\n')
-                    if not command:
-                        command = console.input(
-                            '[red]->[/red]请输入对应操作的序号，输入其它非序号来重新选择课程：\n1-自动完成课程下所有课件\n2-显示当前课程的课件完成信息\n')
-                    if command == '1':
+                console.print('准备开始完成课程...')
+                for course_choose in course_choose_list:
+                    console.print(f'开始课程 -> {course_choose["courseName"]}\n')
 
-                        cell_list = all_cell(me, course_choose_info['courseOpenId'], course_choose_info['openClassId'])
+                    all_cell_list = course.all_cell(course_choose['courseOpenId'], course_choose['courseName'],
+                                                    course_choose['openClassId'])
+                    # 展示课件
+                    __cell_table = Table(show_header=True, header_style="bold magenta")
+                    __cell_table.add_column("课件名", justify='center')
+                    __cell_table.add_column("课程ID", justify='center', style='red')
+                    __cell_table.add_column("课件类型", justify="center", style='yellow')
+                    __cell_table.add_column("进度(可能不准确)", justify="center")
 
-                        with Progress(
-                                SpinnerColumn(),
-                                TextColumn("[progress.description]{task.description}"),
-                                BarColumn(),
-                                TimeElapsedColumn(),
-                                TextColumn("[progress.percentage]{task.percentage:>3.0f}%")
-                        ) as progress:
-                            my_course = core.Course(me)
-                            # 设置rich progress
-                            my_course.set_progress(progress=progress)
+                    for c in all_cell_list:
+                        __cell_table.add_row(
+                            c['name'],
+                            c['id'],
+                            c['type'],
+                            str(c['process'])
+                        )
+                    console.print(__cell_table)
 
-                            # 重置当前课件为第一课件
-                            try:
-                                my_course.change_corseware(course_id=course_choose_info['courseOpenId'],
-                                                           class_id=course_choose_info['openClassId'],
-                                                           cell_id=cell_list[0]['id'],
-                                                           cell_name=cell_list[0]['name'])
-                            except IndexError:
-                                console.print('[yellow]->[/yellow]课程下无课件，跳过')
+                    # 重置当前课件为第一课件
+                    course.change_corseware(course_choose['courseOpenId'], course_choose['openClassId'],
+                                             all_cell_list[0]['id'], all_cell_list[0]['name'])
 
-                                continue
+                    # 进度条
 
-                            # 总进度
-                            task_total = progress.add_task('[yellow]总进度', total=len(cell_list))
-                            task_cell = progress.add_task('当前课程', total=1)
-                            my_course.set_progress_task(task_cell)
-                            if auto_comment_info:
-                                task_comment = progress.add_task('[red]当前课程评论', total=3)
+                    with Progress(
+                        SpinnerColumn(),
+                        TextColumn("[progress.description]{task.description}"),
+                        BarColumn(),
+                        TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+                        transient=True,
+                    ) as progress:
+                        p_t = Thread(target=progress_func, args=(progress, len(all_cell_list),course),daemon=True)
+                        p_t.start()
 
-                            for cell in cell_list:
-                                # 单课进度
-                                # task_cell = progress.add_task(f'[red]{cell["name"]}',total=10)
+                        for c in all_cell_list:
+                            t = Thread(target=course.finish_cell,
+                                       args=(course_choose['courseOpenId'], course_choose['openClassId'], c['id']),daemon=True)
+                            t.start()
+                            t.join()
 
-                                # progress.update(task_cell,completed=0,description=f'[yellow]{cell["name"]}[视频]',refresh=True)
-                                if cell['process'] != 100:
-                                    # 如果课件不为100%进度则开始刷课
-                                    my_course.finish_cell(course_id=course_choose_info['courseOpenId'],
-                                                          class_id=course_choose_info['openClassId'],
-                                                          cell_id=cell['id'])
-                                    time.sleep(2)
+                            #__need_commant = False
+                            if __need_commant:
+                                __all_comment_list = course.all_comment(c['id'], course_choose['courseOpenId'],
+                                                                        course_choose['openClassId'])
+                                for __coment in __all_comment_list:
+                                    if me.id == __coment['user_id']:
+                                        logger.info(f'用户{me.number}已经在课件{c["name"]}({c["id"]})评论，跳过评论')
+                                        __need_commant = False
+                                        break
+
+                                if course.add_comment(c['id'],course_choose['courseOpenId'],course_choose['openClassId'],comment_info['content'],comment_info['star']):
+                                    logger.info(f'用户{me.number}已经在课件{c["name"]}({c["id"]})评论，跳过评论')
                                 else:
-                                    progress.update(task_cell, completed=1, description=f'[green]{cell["name"]}(跳过课件)',
-                                                    refresh=True)
-                                # progress.update(task_cell,completed=8,description=f'[rgb(0,128,128)]{cell["name"]}[对比评论]',refresh=True)
+                                    logger.warning(f'为用户{me.number}在课件{c["name"]}({c["id"]})下添加评论失败')
+                        # 重置任务进度
+                        course.progress_clear()
 
-                                # 评论任务
-                                if auto_comment_info:
-                                    progress.update(task_comment, completed=0,
-                                                    description=f'[rgb(0,128,128)]{cell["name"]}[获取评论]',
-                                                    refresh=True)
-                                    comment_info = my_course.all_comment(cell['id'], course_choose_info['courseOpenId'],
-                                                                         course_choose_info['openClassId'], 1)
-                                    progress.update(task_comment, completed=1,
-                                                    description=f'[rgb(0,128,128)]{cell["name"]}[对比评论]',
-                                                    refresh=True)
-                                    is_comment = False
-                                    for comment in comment_info:
-                                        if me.id == comment['user_id']:
-                                            # console.print('已经评论过此课件，跳过')
-                                            is_comment = True
-                                            # progress.update(task_cell,completed=9,description=f'[rgb(0,128,128)]{cell["name"]}[跳过评论]',refresh=True)
-                                            progress.update(task_comment, completed=2,
-                                                            description=f'[rgb(0,128,128)]{cell["name"]}[跳过评论]',
-                                                            refresh=True)
-                                            break
-
-                                    if not is_comment:
-                                        progress.update(task_comment, completed=2,
-                                                        description=f'[rgb(0,128,128)]{cell["name"]}[添加评论]',
-                                                        refresh=True)
-                                        my_course.add_comment(cell['id'], course_choose_info['courseOpenId'],
-                                                              course_choose_info['openClassId'], auto_comment_info['content'], str(auto_comment_info['star']))
-
-                                        progress.update(task_comment, completed=3,
-                                                        description=f'[rgb(0,128,128)]{cell["name"]}[完成评论]',
-                                                        refresh=True)
-
-                                progress.update(task_total, advance=1, refresh=True)
-                                time.sleep(2)
-
-                            # 课件结束，删除最上端课件ID以让脚本选择下一个课件
-                            try:
-                                del course_choose_list[0]
-                                course_choose_id = 'wait'
-                            except IndexError:
-                                # 列表已被清空
-                                course_choose_id = None
-                            
-                    elif command == '2':
-                        cell_list = all_cell(me, course_choose_info['courseOpenId'], course_choose_info['openClassId'])
-                        console.input('[red]->[/red]输入任意字符或回车继续')
-                    else:
-                        console.print('重新选择课程')
-                        continue
-                except KeyboardInterrupt:
-                    # 清空课程选择
-                    course_choose = ''
-                    course_choose_id = None
-                    course_choose_list = []
-                    # 清空课程指令
-                    command = ''
-                    console.print('已清空全部课程选择')
-                    continue
+                console.input('所选课程及其课件已经全部完成，按回车键返回初始界面')
+                break
 
     except KeyboardInterrupt:
         console.print('返回登陆')
         continue
-    except:
+    except Exception as e:
         console.input('\n' + traceback_exc())
+        logger.exception(e)
         console.input('\n[red]发生错误，报错如上。按任意键继续[/red]')
         continue
