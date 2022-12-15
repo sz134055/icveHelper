@@ -410,11 +410,24 @@ class User(BaseReq):
 
         return self.get_headers()['User-Agent']
 
-    def gen_client_id(self) -> str:
-        new_uuid = uuid4()
-        new_uuid = str(new_uuid).replace('-', '')
-        logger.info(f'生成ClientID(UUID4)->{new_uuid}')
-        return new_uuid
+    def gen_client_id(self) -> None:
+        """
+        自动生成并设置ClientID
+
+        :return: None
+        """
+        def get_uuid() -> str:
+            """
+            生成符合ClientID格式的32位UUID
+
+            :return: 32位UUID
+            """
+            new_uuid = uuid4()
+            new_uuid = str(new_uuid).replace('-', '')
+            logger.info(f'生成ClientID(UUID4)->{new_uuid}')
+            return new_uuid
+        self.login_info.update({'clientId':get_uuid()})
+
 
     def login(self, account: str = None, pswd: str = None) -> dict:
         """
@@ -479,10 +492,10 @@ class User(BaseReq):
         # CLIENT ID
         if not self.login_info['clientId']:
             __save_user = self.get_save(self.login_info['userName'])
-            if __save_user:
+            if __save_user and __save_user['info']['clientId']:
                 self.login_info.update({'clientId': __save_user['info']['clientId']})
             else:
-                self.login_info.update({'clientId': self.gen_client_id()})
+                self.gen_client_id()
             self.user_info.update(self.login_info)
 
         # FORM LOAD
@@ -769,6 +782,19 @@ class Course(BaseReq):
             logger.warning('找不到指定任务或切换为新任务时候未指定总进度')
             return self.process_now
 
+    def progress_clear(self) -> None:
+        """
+        用于情况任务状态
+
+        :return: None
+        """
+        self.task_process.update({
+            'name': '',
+            'id': '',
+            'total': 0,
+            'now': 0
+        })
+
     '''
     # 用于设置RICH进程
     def set_progress(self, progress):
@@ -981,11 +1007,11 @@ class Course(BaseReq):
         """
         用于重置当前学习课件，避免因为上次学习记录影响课件完成方法
 
-        :param course_id:
-        :param class_id:
-        :param cell_id:
-        :param cell_name:
-        :return:
+        :param course_id: 课程ID
+        :param class_id: 开课班级ID
+        :param cell_id: 课件ID
+        :param cell_name: 课件名
+        :return: 成功重置返回True，否则为False
         """
         # 重置INFO_GET
         header = self.get_headers(update_item={
