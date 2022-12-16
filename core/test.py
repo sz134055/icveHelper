@@ -13,10 +13,10 @@ def test_core(account,pswd):
     me.login(account,pswd)
     course = me.my_courses()
     if course:
-        all_course = course.all_course
-        print(all_course)
+        all_courses = course.all_courses
+        print(all_courses)
         course_choose_index = int(input('COURSE_CHOOSE_INDEX'))
-        course_choose = all_course[course_choose_index]
+        course_choose = all_courses[course_choose_index]
         all_cell = course.all_cell(course_choose['courseOpenId'],class_id=course_choose['openClassId'])
         print(all_cell)
         cell_choose_index = int(input('CELL_CHOOSE_INDEX'))

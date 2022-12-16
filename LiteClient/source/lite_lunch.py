@@ -231,7 +231,7 @@ while True:
             # 课程主循环
 
             console.print('正在拉取你的所有课程')
-            course_list = course.all_course
+            course_list = course.all_courses
             # 展示所有课程
             course_table = Table(show_header=True, header_style="bold magenta")
             course_table.add_column("序号", justify='center', style='green')
@@ -340,7 +340,7 @@ while True:
                     console.print(__cell_table)
 
                     # 重置当前课件为第一课件
-                    course.change_corseware(course_choose['courseOpenId'], course_choose['openClassId'],
+                    course.change_courseware(course_choose['courseOpenId'], course_choose['openClassId'],
                                              all_cell_list[0]['id'], all_cell_list[0]['name'])
 
                     # 进度条

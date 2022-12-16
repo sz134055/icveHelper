@@ -1,6 +1,7 @@
 from random import uniform, randint
 import requests
 from requests import utils
+from requests.packages.urllib3 import disable_warnings
 import time
 import hashlib
 from json.decoder import JSONDecodeError
@@ -8,31 +9,14 @@ from json import load as json_load
 from json import dump as json_dump
 from time import strftime, localtime
 import logging
-# from . import logger
-# from sys import _getframe
 from uuid import uuid4
-from urllib import parse
-
-requests.packages.urllib3.disable_warnings()
-from os.path import join, split, exists, realpath
+from os.path import join, exists
 from os import mkdir
 
-# 初始化requests
-# s = requests.session()
-# s.verify = False
-
-"""
-信息返回 dict
-code：int 状态码
-    - 0 一切正常
-    - -1 致命错误
-    - 1 正常请求但是内部发生异常
-msg：str 返回信息
-data：dict 返回数据
-"""
-
-
 class Logs:
+    """
+    日志管理类
+    """
     def __init__(self):
 
         # self.work_path = split(realpath(__file__))[0]
@@ -76,6 +60,9 @@ logger = Logs().get_logger()
 
 
 class CONF:
+    """
+    配置管理类
+    """
     # 配置文件初始信息
     BASE_INFO = {
         'icve_version': {
@@ -148,6 +135,9 @@ conf = CONF()
 
 
 class BaseReq:
+    """
+    ICVE功能基类
+    """
     # 职教云版本信息
     icve_version = conf.get_icve_version()
 
@@ -164,10 +154,11 @@ class BaseReq:
         # REQ
         self.s = requests.session()
         self.s.verify = False
+        disable_warnings()
 
     def get_headers(self, update_item: dict = None, new: bool = True, ) -> dict:
         """
-        获取Headers
+        获取或修改Headers
 
         :param update_item: 需要更新进Headers的信息
         :param new: 默认为True，此会返回一个新的Headers，不会影响类本事的Headers，如若为False，则可利用为更新类Headers
@@ -185,6 +176,31 @@ class BaseReq:
 
     def request(self, url: str, header: dict = None, params: dict = None, data: dict = None,
                 timeout: int = None) -> dict:
+        """
+        [TOOL]向ICVE服务器发起GET或POST（自动区分）请求并自动预处理、记录响应结果
+
+        参数说明
+
+        - 如若未指定Headers，将会使用默认的Headers
+
+        - 会优先检查data参数，如若不为空，则视为POST请求
+
+        响应结果示例
+        {
+            code: (int) 状态码：0 一切正常 -1 致命错误 1 正常请求但是内部发生异常
+
+            msg：(str) 返回信息
+
+            data：(dict) 返回数据，-1时为空，1时将会返回原始响应内容，0时为JSON转义为dict的结果
+        }
+
+        :param url: 指定URL
+        :param header: Headers
+        :param params: 参数，用于GET或POST
+        :param data: 表单，用于POST
+        :param timeout: 超时时间，留空为requests.session().request()默认超时时间
+        :return: 预处理后的响应结果
+        """
         if not header:
             # 返回默认Header
             header = self.get_headers()
@@ -260,6 +276,9 @@ def login_check(func):
 
 
 class User(BaseReq):
+    """
+    用于管理ICVE账户相关
+    """
     def __init__(self):
         """
         User类，处理ICVE用户账户相关
@@ -330,7 +349,6 @@ class User(BaseReq):
         self.login_info.update(login_info)
         self.ua_switch()
         self.user_info.update(self.login_info)
-
 
     def __save_init(self) -> str:
         """
@@ -416,6 +434,7 @@ class User(BaseReq):
 
         :return: None
         """
+
         def get_uuid() -> str:
             """
             生成符合ClientID格式的32位UUID
@@ -426,12 +445,14 @@ class User(BaseReq):
             new_uuid = str(new_uuid).replace('-', '')
             logger.info(f'生成ClientID(UUID4)->{new_uuid}')
             return new_uuid
-        self.login_info.update({'clientId':get_uuid()})
 
+        self.login_info.update({'clientId': get_uuid()})
 
     def login(self, account: str = None, pswd: str = None) -> dict:
         """
         登陆至ICVE（模拟APP登录），登陆后会同步登录信息并返回登录状态及用户的相关信息
+
+        可以仅提供账号与密码，其它登录项会默认生成
 
         :param account: 职教云账号
         :param pswd: 职教云密码
@@ -551,7 +572,6 @@ class User(BaseReq):
                 logger.warning(f'登录失败；服务器响应：{res_json["msg"]}')
                 return {'code': 1, 'msg': res_json['msg'], 'data': {}}
 
-
     @property
     @login_check
     def name(self) -> str:
@@ -633,32 +653,6 @@ class User(BaseReq):
             'id': self.user_info['schoolId']
         }
 
-    '''
-    @property
-    @login_check
-    def cookies(self) -> dict:
-        """
-        返回COOKIES
-
-        :return: dict cookies
-        """
-        return self.user_info['cookies']
-
-
-    @property
-    @login_check
-    def req(self):
-        """
-        返回requests.session()
-        
-        :return: 包含登陆后所需信息的requests.session()
-        """
-        # 触发login_check
-        self.user_info['cookies']
-
-        return self.__s
-    '''
-
     @login_check
     def my_courses(self):
         """
@@ -678,6 +672,9 @@ class User(BaseReq):
 
 
 class Course(BaseReq):
+    """
+    用于管理ICVE课程相关
+    """
     def __init__(self):
         super().__init__()
         # self.user = None
@@ -763,8 +760,7 @@ class Course(BaseReq):
         :param total_process: 更新当前总进度的值
         :return: 当前任务进度
         """
-        if target_name and target_id and self.task_process['name'] == target_name and self.task_process[
-            'id'] == target_id:
+        if target_name and target_id and self.task_process['name'] == target_name and self.task_process['id'] == target_id:
             self.task_process.update({'now': now_process})
             logger.info(f'更新当前任务{self.process_name}({self.process_id})进度为[{self.process_now}/{self.process_total}]')
             return self.process_now
@@ -795,19 +791,8 @@ class Course(BaseReq):
             'now': 0
         })
 
-    '''
-    # 用于设置RICH进程
-    def set_progress(self, progress):
-        self.progress = progress
-
-    # 用于添加RICH进程任务
-    def set_progress_task(self, task):
-        self.progress_task = task
-
-    '''
-
     @property
-    def all_course(self) -> list[dict]:
+    def all_courses(self) -> list[dict]:
         """
         获取所有在修课程列表，列表中包含了课程及对应的信息，不包括MOOC
 
@@ -949,14 +934,8 @@ class Course(BaseReq):
         pay_load = self.the_pay_load.copy()
         pay_load.update({
             'courseOpenId': course_id,
-            # 'openClassId': class_id,
             'moduleId': module_id
         })
-        '''
-        res = self.get_req('all_topic',params=pay_load)
-
-        res_json = res.json()
-        '''
         t_list = self.courseware(self.apis['all_topic'], params=pay_load)
         if t_list:
             logger.info(f'成功获取课程{course_id}大纲{module_id}的的章节列表')
@@ -1002,7 +981,7 @@ class Course(BaseReq):
             logger.warning(f'获取课程{course_id}章节{topic_id}的课件列表失败')
             return None
 
-    def change_corseware(self, course_id: str, class_id: str, cell_id: str, cell_name: str) -> bool:
+    def change_courseware(self, course_id: str, class_id: str, cell_id: str, cell_name: str) -> bool:
         # 此方法存在 用户信息异常 响应，为未携带COOKIES导致，待解决
         """
         用于重置当前学习课件，避免因为上次学习记录影响课件完成方法
@@ -1123,15 +1102,15 @@ class Course(BaseReq):
             logger.warning(f'获取课件 {cell_id} 的信息失败，响应结果：{res}')
             return None
 
-    def finish_cell(self, course_id: str, class_id: str, cell_id: str):
+    def finish_cell(self, course_id: str, class_id: str, cell_id: str) -> None:
         # 在课件信息中包含学习时长，下一次更新中应加入学习时长增加功能
         """
-        完成课件
+        完成指定的课件
 
         :param course_id: 课程ID
         :param class_id: 开课班级ID
         :param cell_id: 课件ID
-        :return:
+        :return: None
         """
         time.sleep(1)
         # 获取课件信息
@@ -1240,12 +1219,7 @@ class Course(BaseReq):
                                 break
                         else:
                             logger.warning(f'在完成课件{cell_info["name"]}({cell_id})时发生异外响应，响应内容：{res}')
-
-                    # logger.info(f'已为课件 {cell_info["name"]}({cell_id}) 添加时长至{num}秒，目标时长{long}秒')
                 else:
-                    # 文档类型
-                    # task_cell = self.progress.add_task(f'[red]{cell_info["name"]}', total=int(cell_info['page']))
-
                     def get_next_page(now: int, page: int) -> int:
                         """
                         自动处理并返回下一提交的音频学习进度
@@ -1310,16 +1284,22 @@ class Course(BaseReq):
                                 break
                         else:
                             logger.warning(f'在完成课件{cell_info["name"]}({cell_id})时发生异外响应，响应内容：{res}')
-
-                    # logger.info(f'已为课件 {cell_info["name"]}({cell_id}) 添加页数至 {now_page} ，目标页数 {page_long}')
         else:
             logger.warning(f'获取课程{course_id}下课件{cell_id}信息失败，无法继续完成课件')
 
-    def all_cell(self, course_id: str = None, course_name: str = None, class_id: str = None) -> list | None:
+    def all_cell(self, course_id: str = None, course_name: str = None, class_id: str = None) -> list[dict] | None:
         """
         自动获取某一课程下所有课件列表，course_id 和 course_name 两个参数至少要有一项填入
 
-        返回示例：
+        返回示例：[{
+            name: (str) 课件名,
+
+            id: (str) 课件ID,
+
+            type: (str) 课件类型,
+
+            process: (float) 课件完成进度
+       },...]
 
         :param course_id: （可选）课程ID，当两参数都有时以此为准
         :param course_name: （可选）课程名，会自动根据此来匹配课程名，可能会导致误差
@@ -1328,7 +1308,7 @@ class Course(BaseReq):
         """
         if not course_id and course_name:
             # 仅当无ID且有Name时尝试定位，二者都有时以ID为准
-            course_list = self.all_course
+            course_list = self.all_courses
             if course_list:
                 for course in course_list:
                     logger.info(f'正在对比输入项：{course_name}---{course["courseName"]}')
@@ -1381,16 +1361,20 @@ class Course(BaseReq):
             logger.warning(f'获取课程 {course_name}[{course_id}]课件大纲失败，无法继续获取所有课件')
             return None
 
-    def all_comment(self, cell_id: str, course_id: str, class_id: str, limit: int = 1) -> list | None:
+    def all_comment(self, cell_id: str, course_id: str, class_id: str, limit: int = 1) -> list[dict] | None:
         """
         获取某一课件下的所有评论
 
         返回示例：[{
             'user_id': 用户ID,
+
             'user_name': 用户名,
+
             'content': 用户评论内容,
+
             'star': (int)用户评星
         }...]
+
         用户评星最大值为5，最小值为0（根据APP结合API响应推测）
 
         :param cell_id: 课件ID
