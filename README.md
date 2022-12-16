@@ -1,22 +1,22 @@
 # ICVE-HELPER
 ## 如果有任何地方侵犯了您的权益，请在issue留言，我会及时处理、删除。
 
-### [Lite版本-适用于多平台](https://gitee.com/saucer216/icve-helper/tree/main/LiteClient)
 
-![WELCOME](./img/welcome.png)
 
-![正在工作...](./img/working.png)
+## 使用说明
 
-### [GUI版本-适用于WINDOWS]((https://gitee.com/saucer216/icve-helper/tree/main/Client))
+所有功能都封装在 [core/core.py](./core/core.py) 中，可自行修改或根据其制作出自己想要的脚本
 
-![Client](./img/client_index.png)
+以下两版本程序便是基于 `core.py`制作的，可自行取用
+
+[Lite版本-适用于多平台](https://gitee.com/saucer216/icve-helper/tree/main/LiteClient)
+
+[GUI版本-适用于WINDOWS](https://gitee.com/saucer216/icve-helper/tree/main/Client)
+
 
 ## INTRO
 **目前不定时更新**
 
-**最新更新**
-- 针对 子节点 类型更新，直接获取子节点下所有课件
-- 报错同时也返回服务器的响应内容，便于排查
 
 **已打包好一份EXE文件可直接运行，详见`LiteClient`下的`README.md`**
 
@@ -30,7 +30,6 @@
 
 代码都为大一至大二期间自学、研究学习所积累而成，因此代码可能会有很多繁琐复杂的"屎山"，以及幼稚的写法等，请见谅。
 
-由于目前学业繁重，加上我这个野路子，是时候学习和转成"正规军"了（跑去学基础理论加C和单片机玩去了），所以现在这个仓库基本处于缓慢更新甚至停更的状态，如果有想法自行编写、维护吧。
 其实ICVE这个APP并不难，非常适合作为新手练习对象（毕竟我就是这么学过来的） ~~但可不要把自己学进去了，违法的事咱别干~~
 
 ## 涵盖的功能
